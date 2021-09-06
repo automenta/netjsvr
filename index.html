@@ -5,15 +5,26 @@
     <title>netvr</title>
 
     <script src="https://www.unpkg.com/jquery@3.6.0/dist/jquery.min.js" type="text/javascript"></script>
-    <script src="https://unpkg.com/worldwindjs@1.8.0/build/dist/worldwind.min.js" type="text/javascript"></script>
-    <script src="https://unpkg.com/osmtogeojson@3.0.0-beta.4/osmtogeojson.js" type="text/javascript"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" type="text/javascript"></script>
+
+    <script src="https://unpkg.com/worldwindjs@1.8.0/build/dist/worldwind.min.js" type="text/javascript"></script>
+
+    <!--
+    OSM Tags
+      https://taginfo.openstreetmap.org/download
+      https://wiki.openstreetmap.org/wiki/Category:Tag_descriptions
+    -->
+    <script src="https://unpkg.com/osmtogeojson@3.0.0-beta.4/osmtogeojson.js" type="text/javascript"></script>
+
+    <!-- https://packery.metafizzy.co/ -->
+<!--    <script src="https://unpkg.com/packery@2.1.2/dist/packery.pkgd.min.js" type="text/javascript"></script>-->
+
+<!--    <script src="http://kombai.github.io/freewall/freewall.js" type="text/javascript"></script>-->
+<!--    <link rel="stylesheet" href="http://kombai.github.io/freewall/example/css/style.css"/>-->
 
     <!-- https://forkaweso.me/Fork-Awesome/icons/ -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css" integrity="sha256-XoaMnoYC5TH6/+ihMEnospgm0J1PM/nioxbOUdnM8HY=" crossorigin="anonymous">
-
-
-    <!-- https://taginfo.openstreetmap.org/download -->
 
 
 
@@ -28,6 +39,14 @@
             height: 100%;
             position: fixed;
         }
+        div {
+            transition: 0.5s;
+            /*opacity: 0.5;*/
+        }
+        /*div:hover {*/
+        /*    opacity: 1.0;*/
+        /*}*/
+
         .full {
             position: fixed; width: 100%; height: 100%; margin: 0; padding: 0;
         }
@@ -37,10 +56,7 @@
         #mode_menu {
             color: white;
         }
-        .topmenu {
-            display: grid;
-            /*pointer-events:none;*/
-        }
+
         #mode_raw {
             max-height: 12em;
             overflow: scroll;
@@ -48,11 +64,31 @@
 
         #mode_idiocracy button {
             margin: 1em;
-            opacity:0.75;
+            /*opacity:0.75;*/
             font-size: 200%;
             font-family:monospace;
             pointer-events:painted;
         }
+        /*#addmenu {*/
+        /*    position: fixed;*/
+        /*    left:10%;*/
+        /*    top:10%;*/
+        /*    width:80%;*/
+        /*    height:80%;*/
+        /*}*/
+
+        #active {
+            height: 100%;
+            overflow: auto;
+        }
+        #active .cell {
+            background-color: white;
+            opacity:0.9;
+            width: 100%;
+
+            /*min-width: 25px;*/
+        }
+
     </style>
 
 <!--    <script src="https://code.jquery.com/mobile/1.5.0-rc1/jquery.mobile-1.5.0-rc1.min.js" type="text/javascript"></script>-->
@@ -67,32 +103,8 @@
 
     <!-- TODO raw amenity mode -->
 
-    <!-- idiocracy mode -->
-    <div id="root" class="side topmenu">
-<!--        <div data-demo-html="true">-->
-<!--            <div data-role="tabs" id="tabs">-->
-<!--                <div data-role="navbar">-->
-<!--                    <ul>-->
-<!--                        <li><a href="#one" data-ajax="false">one</a></li>-->
-<!--                        <li><a href="#two" data-ajax="false">two</a></li>-->
-<!--                        <li><a href="ajax-content-ignore.html" data-ajax="false">three</a></li>-->
-<!--                    </ul>-->
-<!--                </div>-->
-<!--                <div id="one" class="ui-body-d ui-content">-->
-<!--                    <h1>First tab contents</h1>-->
-<!--                </div>-->
-<!--                <div id="two">-->
-<!--                    <ul data-role="listview" data-inset="true">-->
-<!--                        <li><a href="#">Acura</a></li>-->
-<!--                        <li><a href="#">Audi</a></li>-->
-<!--                        <li><a href="#">BMW</a></li>-->
-<!--                        <li><a href="#">Cadillac</a></li>-->
-<!--                        <li><a href="#">Ferrari</a></li>-->
-<!--                    </ul>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
 
+    <div id="addmenu" style="display:none">
         <div id="mode_menu">
             <button title="Clear"><i class="fa fa-times" aria-hidden="true"></i></button>
             <button title="Amenity"><i class="fa fa-wrench" aria-hidden="true"></i></button>
@@ -109,41 +121,59 @@
         </div>
     </div>
 
+    <!-- idiocracy mode -->
+    <div id="root" class="side">
+        <button id="addmenu_toggle" title="add">+</button>
+        <button id="remembermenu_toggle" title="remember">s</button>
+        <div id="active">
+            <div class="cell"><button>a</button></div>
+            <div class="cell"><button>b</button></div>
+            <div class="cell"><button>c</button></div>
+        </div>
+    </div>
+
+
+
 <script>
     "use strict";
 
-    window.addEventListener("load", () => {
+    class Layer {
+        start(focus) {
 
-        const w = new WorldWind.WorldWindow("map");
-
-        //w.addLayer(new WorldWind.BMNGOneImageLayer());
-        //w.addLayer(new WorldWind.BingAerialWithLabelsLayer());
-        w.addLayer(new WorldWind.OpenStreetMapImageLayer());
-        w.addLayer(new WorldWind.AtmosphereLayer());
-
-        //w.addLayer(new WorldWind.CompassLayer());
-        //w.addLayer(new WorldWind.CoordinatesDisplayLayer(wwd));
-        //w.addLayer(new WorldWind.ViewControlsLayer(wwd));
-
-        {
-            $.ajax({
-                url: 'osm.tags.popular.json',
-            }).done(tags => {
-                const raw = $('#mode_raw');
-               _.forEach(tags.data, tag=>{
-                   const key = tag.key, value = tag.value;
-
-                   //filters
-                   if (key === 'source' || key === 'start_date' || key === 'gauge')
-                       return;
-
-                   raw.append($('<button>').append(key + '=' + value));
-               });
-            });
         }
-        {
+        stop(focus) {
+
+        }
+    }
+
+    class WWLayer extends Layer {
+
+        constructor(l) {
+            super();
+            this.l = l;
+            this.opacity = 1; //TODO
+        }
+
+        //TODO set opacity ...
+
+        start(focus) {
+            focus.view.addLayer(this.l);
+        }
+        stop(focus) {
+            focus.view.removeLayer(this.l);
+        }
+    }
+
+    class OSMLayer extends Layer {
+        start(focus) {
+
+            const layer = new WorldWind.RenderableLayer();
+            this.layer = layer;
+            focus.view.addLayer(layer);
+
+
             const placemarkAttributes = new WorldWind.PlacemarkAttributes(null);
-            placemarkAttributes.imageScale = 0.05;
+            placemarkAttributes.imageScale = 0.25;
             placemarkAttributes.imageColor = WorldWind.Color.WHITE;
             placemarkAttributes.labelAttributes.offset = new WorldWind.Offset(
                 WorldWind.OFFSET_FRACTION, 0.5,
@@ -153,16 +183,33 @@
             const shapeConfigurationCallback = (geometry, properties) => {
                 const configuration = {};
 
+                // _.forEach(properties, (k,p) => {
+                //     console.log(p);
+                //     //console.log(p.amenity);
+                // });
+
                 if (geometry.isPointType() || geometry.isMultiPointType()) {
-                    configuration.attributes = new WorldWind.PlacemarkAttributes(placemarkAttributes);
+                    const v = new WorldWind.PlacemarkAttributes(placemarkAttributes);
+
+                    const amenity = properties.amenity;
+                    if (amenity) {
+                        if (amenity === 'post_box')
+                            v.imageColor = WorldWind.Color.BLUE;
+                        else if (amenity === 'bank')
+                            v.imageColor = WorldWind.Color.GREEN;
+                        else
+                            v.imageColor = WorldWind.Color.RED;
+                    }
+                    //v.imageColor = JSON.toString(properties).hash
+                    configuration.attributes = v;
 
                     if (properties && (properties.name || properties.Name || properties.NAME)) {
                         configuration.name = properties.name || properties.Name || properties.NAME;
                     }
-                    if (properties && properties.POP_MAX) {
-                        const population = properties.POP_MAX;
-                        configuration.attributes.imageScale = 0.01 * Math.log(population);
-                    }
+                    // if (properties && properties.POP_MAX) {
+                    //     const population = properties.POP_MAX;
+                    //     configuration.attributes.imageScale = 0.01 * Math.log(population);
+                    // }
                 } else if (geometry.isLineStringType() || geometry.isMultiLineStringType()) {
                     configuration.attributes = new WorldWind.ShapeAttributes(null);
                     configuration.attributes.drawOutline = true;
@@ -199,19 +246,108 @@
             //     "out;"
 
             $.ajax({
-                url: 'https://overpass-api.de/api/interpreter?data=%2F*%0AThis%20is%20an%20example%20Overpass%20query.%0ATry%20it%20out%20by%20pressing%20the%20Run%20button%20above%21%0AYou%20can%20find%20more%20examples%20with%20the%20Load%20tool.%0A*%2F%0Anode%0A%20%20%5Bamenity%3Ddrinking_water%5D%0A%20%20%2840.76380376778105%2C-73.98583889007568%2C40.78567563696274%2C-73.9518928527832%29%3B%0Aout%3B',
+                url: 'https://overpass-api.de/api/interpreter?data=node%0A%20%20%5Bamenity%5D%0A%20%20%28' +
+                    //41.877613636897365 + '%2C' + 12.475533485412596 + '%2C' + 41.89911477919093 + '%2C' + 12.509479522705078
+                    40.7638 + '%2C' + -73.98584 + '%2C' + 40.78568 + '%2C' + -73.95189
+                    + '%29%3B%0Aout%3B',
             }).done(osm_data => {
                 const geojson = osmtogeojson(osm_data);
-                //console.log(geojson);
 
-                const polygonLayer = new WorldWind.RenderableLayer("GeoJSON");
                 //const resourcesUrl = "https://worldwind.arc.nasa.gov/web/examples/data/geojson-data/";
                 //const polygonGeoJSON = new WorldWind.GeoJSONParser(resourcesUrl + "PolygonTest.geojson");
                 const polygonGeoJSON = new WorldWind.GeoJSONParser(geojson);
-                polygonGeoJSON.load(null, shapeConfigurationCallback, polygonLayer);
-                w.addLayer(polygonLayer);
+                polygonGeoJSON.load(null, shapeConfigurationCallback, layer);
             });
 
+        }
+
+        stop(focus) {
+            this.view.removeLayer(this.layer);
+            delete this.layer;
+        }
+    }
+
+    class Focus {
+
+        constructor(view) {
+            this.view = view;
+
+
+
+
+
+
+            //TODO w.clearLayers()
+            view.addLayer(new WorldWind.AtmosphereLayer());
+            //view.addLayer(new WorldWind.CompassLayer());
+            //view.addLayer(new WorldWind.CoordinatesDisplayLayer(wwd));
+            //view.addLayer(new WorldWind.ViewControlsLayer(wwd));
+
+
+            this.layers = [];
+        }
+
+        position(lat, lon, alt) {
+            const cam = this.view.camera;
+            cam.tilt = 45;
+            cam.position.latitude = lat;
+            cam.position.longitude = lon;
+            cam.position.altitude = alt;
+        }
+
+        addLayer(layer) {
+            this.layers.push(layer);
+            layer.start(this);
+        }
+
+        removeLayer(layer) {
+            const removed = this.layers.remove(layer);
+            console.log(layer, ' = ? = ', removed); //TODO
+            layer.stop(this);
+        }
+
+
+    }
+
+
+    window.addEventListener("load", () => {
+
+        $("#addmenu_toggle").click(()=>{
+
+            $("#addmenu").toggle("slow");
+        });
+
+        const w = new WorldWind.WorldWindow("map");
+
+        const f = new Focus(w);
+        f.position(40.7638, -73.98584, 1000);  //central park
+
+        f.addLayer(new WWLayer(
+            //new WorldWind.OpenStreetMapImageLayer()
+            //new WorldWind.BMNGOneImageLayer()
+            new WorldWind.BingAerialWithLabelsLayer()
+        ));
+
+        f.addLayer(new OSMLayer());
+
+        {
+            $.ajax({
+                url: 'osm.tags.popular.json',
+            }).done(tags => {
+                const raw = $('#mode_raw');
+               _.forEach(tags.data, tag=>{
+                   const key = tag.key, value = tag.value;
+
+                   //filters
+                   if (key === 'source' || key === 'source_ref' || key === 'import_uuid'
+                       || key === 'FIXME' || key === 'fixme' || key === 'start_date' || key === 'gauge' || key === 'note'
+                       || key === 'attribution' || key === 'mapper'
+                   )
+                       return;
+
+                   raw.append($('<button>').append(key + '=' + value));
+               });
+            });
         }
 
 
