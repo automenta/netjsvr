@@ -33,6 +33,8 @@
     <style>
         body {
             background-color: black;
+            font-size: 200%;
+            font-family:monospace;
             margin: 0;
             padding: 0;
             width: 100%;
@@ -65,8 +67,6 @@
         #mode_idiocracy button {
             margin: 1em;
             /*opacity:0.75;*/
-            font-size: 200%;
-            font-family:monospace;
             pointer-events:painted;
         }
         /*#addmenu {*/
@@ -82,8 +82,8 @@
             overflow: auto;
         }
         #active .cell {
-            background-color: white;
-            opacity:0.9;
+            background-color: #888888;
+            /*opacity:0.9;*/
             width: 100%;
 
             /*min-width: 25px;*/
@@ -126,9 +126,6 @@
         <button id="addmenu_toggle" title="add">+</button>
         <button id="remembermenu_toggle" title="remember">s</button>
         <div id="active">
-            <div class="cell"><button>a</button></div>
-            <div class="cell"><button>b</button></div>
-            <div class="cell"><button>c</button></div>
         </div>
     </div>
 
@@ -138,49 +135,75 @@
     "use strict";
 
     class Layer {
+        constructor(name) {
+            this.name = name;
+        }
+
         start(focus) {
 
         }
         stop(focus) {
 
+        }
+        /* produce an element for display in list */
+        render(focus) {
+            return $('<button>').text(this.name);
         }
     }
 
     class WWLayer extends Layer {
 
-        constructor(l) {
-            super();
+        constructor(name, l) {
+            super(name);
             this.l = l;
-            this.opacity = 1; //TODO
         }
-
         //TODO set opacity ...
+
+        opacity(o) {
+            console.log(this.l.opacity);
+            this.l.opacity = o;
+            return this;
+        }
 
         start(focus) {
             focus.view.addLayer(this.l);
+            focus.view.redraw(); //TODO debounce
         }
         stop(focus) {
             focus.view.removeLayer(this.l);
+            focus.view.redraw(); //TODO debounce
+        }
+        render(focus) {
+            const toggle = $('<button>').text("+");
+            toggle.click(()=>{
+                this.l.enabled = !this.l.enabled;
+                toggle.text(this.l.enabled ? "+" : "-");
+                focus.view.redraw();
+            });
+
+            const label = $('<span>').text(this.name);
+
+            return $('<div>').append(toggle, label);
         }
     }
 
-    class OSMLayer extends Layer {
-        start(focus) {
+    class OSMNodes  {
 
-            const layer = new WorldWind.RenderableLayer();
-            this.layer = layer;
-            focus.view.addLayer(layer);
+        constructor(focus) {
 
+            this.focus = focus;
+            const layers = [];
+            this.layers = layers;
 
-            const placemarkAttributes = new WorldWind.PlacemarkAttributes(null);
-            placemarkAttributes.imageScale = 0.25;
-            placemarkAttributes.imageColor = WorldWind.Color.WHITE;
-            placemarkAttributes.labelAttributes.offset = new WorldWind.Offset(
+            const attr = new WorldWind.PlacemarkAttributes(null);
+            attr.imageSource = WorldWind.configuration.baseUrl + "images/white-dot.png";
+            attr.imageScale = 0.25;
+            attr.imageColor = WorldWind.Color.WHITE;
+            attr.labelAttributes.offset = new WorldWind.Offset(
                 WorldWind.OFFSET_FRACTION, 0.5,
                 WorldWind.OFFSET_FRACTION, 1.5);
-            placemarkAttributes.imageSource = WorldWind.configuration.baseUrl + "images/white-dot.png";
 
-            const shapeConfigurationCallback = (geometry, properties) => {
+            this.shapeConfigurationCallback = (geometry, properties) => {
                 const configuration = {};
 
                 // _.forEach(properties, (k,p) => {
@@ -189,7 +212,7 @@
                 // });
 
                 if (geometry.isPointType() || geometry.isMultiPointType()) {
-                    const v = new WorldWind.PlacemarkAttributes(placemarkAttributes);
+                    const v = new WorldWind.PlacemarkAttributes(attr);
 
                     const amenity = properties.amenity;
                     if (amenity) {
@@ -244,25 +267,45 @@
             //     "  [amenity=drinking_water]\n" +
             //     "  (40.7638, -73.98584, 40.78568, -73.95189);\n" +
             //     "out;"
-
+            let latMin = 40.7638, latMax = 40.78568;
+            let lonMax = -73.95189, lonMin = -73.98584;
             $.ajax({
                 url: 'https://overpass-api.de/api/interpreter?data=node%0A%20%20%5Bamenity%5D%0A%20%20%28' +
-                    //41.877613636897365 + '%2C' + 12.475533485412596 + '%2C' + 41.89911477919093 + '%2C' + 12.509479522705078
-                    40.7638 + '%2C' + -73.98584 + '%2C' + 40.78568 + '%2C' + -73.95189
+                    latMin + '%2C' + lonMin + '%2C' + latMax + '%2C' + lonMax
                     + '%29%3B%0Aout%3B',
-            }).done(osm_data => {
-                const geojson = osmtogeojson(osm_data);
+            }).done(X => {
+                this.addLayer(X, focus);
+            });
+        }
 
-                //const resourcesUrl = "https://worldwind.arc.nasa.gov/web/examples/data/geojson-data/";
-                //const polygonGeoJSON = new WorldWind.GeoJSONParser(resourcesUrl + "PolygonTest.geojson");
-                const polygonGeoJSON = new WorldWind.GeoJSONParser(geojson);
-                polygonGeoJSON.load(null, shapeConfigurationCallback, layer);
+
+        addLayer(X) {
+            const x = osmtogeojson(X);
+            const xx = _.groupBy(x.features, 'properties.amenity');
+
+            const that = this;
+            _.forEach(xx, (subsetX,k)=>{
+                const y = _.clone(x);
+                y.features = subsetX;
+                that.load(y, k)
             });
 
         }
 
+        load(x, name) {
+            const y = new WorldWind.RenderableLayer();
+
+            new WorldWind.GeoJSONParser(x).load(null, this.shapeConfigurationCallback, y);
+
+            const Y = new WWLayer(name, y);
+            this.focus.addLayer(Y);
+            this.layers.push(Y);
+            return Y;
+        }
+
         stop(focus) {
-            this.view.removeLayer(this.layer);
+            //TODO
+            //this.focus.removeLayers(this.layer);
             delete this.layer;
         }
     }
@@ -298,9 +341,17 @@
         addLayer(layer) {
             this.layers.push(layer);
             layer.start(this);
+
+            const e = $('<div>').attr('class', 'cell').append(layer.render(this));
+
+            $('#active').append(e);
+            layer.element = e;
         }
 
         removeLayer(layer) {
+            layer.element.remove();
+            delete layer.element;
+
             const removed = this.layers.remove(layer);
             console.log(layer, ' = ? = ', removed); //TODO
             layer.stop(this);
@@ -314,7 +365,7 @@
 
         $("#addmenu_toggle").click(()=>{
 
-            $("#addmenu").toggle("slow");
+            $("#addmenu").toggle(/*"slow"*/);
         });
 
         const w = new WorldWind.WorldWindow("map");
@@ -322,13 +373,12 @@
         const f = new Focus(w);
         f.position(40.7638, -73.98584, 1000);  //central park
 
-        f.addLayer(new WWLayer(
-            //new WorldWind.OpenStreetMapImageLayer()
-            //new WorldWind.BMNGOneImageLayer()
-            new WorldWind.BingAerialWithLabelsLayer()
-        ));
+        f.addLayer(new WWLayer("Satellite", new WorldWind.BingAerialWithLabelsLayer()).opacity(0.5));
+        f.addLayer(new WWLayer("OSM", new WorldWind.OpenStreetMapImageLayer()).opacity(0.5));
+        //
+        //new WorldWind.BMNGOneImageLayer()
 
-        f.addLayer(new OSMLayer());
+        new OSMNodes(f);
 
         {
             $.ajax({
