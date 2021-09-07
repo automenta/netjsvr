@@ -33,8 +33,8 @@
     <style>
         body {
             background-color: black;
-            font-size: 200%;
-            font-family:monospace;
+            font-size: 150%;
+            font-family: monospace;
             margin: 0;
             padding: 0;
             width: 100%;
@@ -42,7 +42,7 @@
             position: fixed;
         }
         div {
-            transition: 0.5s;
+            transition: 0.25s;
             /*opacity: 0.5;*/
         }
         /*div:hover {*/
@@ -82,11 +82,20 @@
             overflow: auto;
         }
         #active .cell {
-            background-color: #888888;
+            background-color: rgba(0.5, 0.5, 0.5, 0.5);
+            color: #bbb;
+
             /*opacity:0.9;*/
-            width: 100%;
+            width: auto;
+
+            padding: 0.1em;
+            margin: 0.1em;
 
             /*min-width: 25px;*/
+        }
+        #active .cell_enabled {
+            background-color: rgba(0.6, 0.6, 0.6, 0.8) !important;
+            color: orange;
         }
 
     </style>
@@ -123,8 +132,10 @@
 
     <!-- idiocracy mode -->
     <div id="root" class="side">
-        <button id="addmenu_toggle" title="add">+</button>
-        <button id="remembermenu_toggle" title="remember">s</button>
+        <div id="menu" style="position: absolute; left:100%; height: 100%">
+            <button id="addmenu_toggle" title="add">+</button>
+            <button id="remembermenu_toggle" title="remember">s</button>
+        </div>
         <div id="active">
         </div>
     </div>
@@ -137,16 +148,41 @@
     class Layer {
         constructor(name) {
             this.name = name;
+            this.element = $('<div>');
         }
 
         start(focus) {
-
+            const e = this.element;
+            e.attr('class', 'cell').append(this.icon(focus));
+            $('#active').append(e);
         }
+
         stop(focus) {
-
+            $('#active').remove(this.element);
         }
+
+        update(focus) {
+            //
+        }
+
+        enable() {
+            if (this.enabled!==true) {
+                this.enabled = true;
+                this.element.addClass('cell_enabled');
+            }
+            return this;
+        }
+
+        disable() {
+            if (this.enabled!==false) {
+                this.enabled = false;
+                this.element.removeClass('cell_enabled');
+            }
+            return this;
+        }
+
         /* produce an element for display in list */
-        render(focus) {
+        icon(focus) {
             return $('<button>').text(this.name);
         }
     }
@@ -160,24 +196,41 @@
         //TODO set opacity ...
 
         opacity(o) {
-            console.log(this.l.opacity);
             this.l.opacity = o;
             return this;
         }
 
         start(focus) {
+            super.start(focus);
             focus.view.addLayer(this.l);
             focus.view.redraw(); //TODO debounce
         }
         stop(focus) {
+            super.stop(focus);
             focus.view.removeLayer(this.l);
             focus.view.redraw(); //TODO debounce
         }
-        render(focus) {
-            const toggle = $('<button>').text("+");
-            toggle.click(()=>{
-                this.l.enabled = !this.l.enabled;
-                toggle.text(this.l.enabled ? "+" : "-");
+
+        enable() {
+            super.enable();
+            this.l.enabled = true;
+            return this;
+        }
+
+        disable() {
+            super.disable();
+            this.l.enabled = false;
+            return this;
+        }
+
+        icon(focus) {
+            const layer = this.l;
+
+            const toggleLabel = () => layer.enabled ? "+" : "-";
+            const toggle = $('<button>').text(toggleLabel());
+            toggle.click(() => {
+                if (layer.enabled) this.disable(); else this.enable();
+                toggle.text(toggleLabel());
                 focus.view.redraw();
             });
 
@@ -236,58 +289,100 @@
                 } else if (geometry.isLineStringType() || geometry.isMultiLineStringType()) {
                     configuration.attributes = new WorldWind.ShapeAttributes(null);
                     configuration.attributes.drawOutline = true;
-                    configuration.attributes.outlineColor = new WorldWind.Color(
-                        0.1 * configuration.attributes.interiorColor.red,
-                        0.3 * configuration.attributes.interiorColor.green,
-                        0.7 * configuration.attributes.interiorColor.blue,
+                    configuration.attributes.interiorColor = new WorldWind.Color(
+                        0.375 + 0.5 * Math.random(),
+                        0.375 + 0.5 * Math.random(),
+                        0.375 + 0.5 * Math.random(),
                         1.0);
-                    configuration.attributes.outlineWidth = 2.0;
+
+                    //configuration.attributes.outlineWidth = 2.0;
                 } else if (geometry.isPolygonType() || geometry.isMultiPolygonType()) {
                     configuration.attributes = new WorldWind.ShapeAttributes(null);
+                    configuration.attributes.drawOutline = false;
 
                     // Fill the polygon with a random pastel color.
                     configuration.attributes.interiorColor = new WorldWind.Color(
                         0.375 + 0.5 * Math.random(),
                         0.375 + 0.5 * Math.random(),
                         0.375 + 0.5 * Math.random(),
-                        0.5);
+                        0.9);
                     // Paint the outline in a darker variant of the interior color.
-                    configuration.attributes.outlineColor = new WorldWind.Color(
-                        0.5 * configuration.attributes.interiorColor.red,
-                        0.5 * configuration.attributes.interiorColor.green,
-                        0.5 * configuration.attributes.interiorColor.blue,
-                        1.0);
+                    // configuration.attributes.outlineColor = new WorldWind.Color(
+                    //     0.5 * configuration.attributes.interiorColor.red,
+                    //     0.5 * configuration.attributes.interiorColor.green,
+                    //     0.5 * configuration.attributes.interiorColor.blue,
+                    //     1.0);
                 }
 
                 return configuration;
             };
 
-            // const query =
-            //     "node\n" +
-            //     "  [amenity=drinking_water]\n" +
-            //     "  (40.7638, -73.98584, 40.78568, -73.95189);\n" +
-            //     "out;"
-            let latMin = 40.7638, latMax = 40.78568;
-            let lonMax = -73.95189, lonMin = -73.98584;
-            $.ajax({
-                url: 'https://overpass-api.de/api/interpreter?data=node%0A%20%20%5Bamenity%5D%0A%20%20%28' +
-                    latMin + '%2C' + lonMin + '%2C' + latMax + '%2C' + lonMax
-                    + '%29%3B%0Aout%3B',
-            }).done(X => {
-                this.addLayer(X, focus);
-            });
+
         }
 
 
+        update(query, lat, lon, lonHalf, latHalf) {
+            if (!latHalf)
+                latHalf = lonHalf; //TODO based on latitude
+
+            //TODO dither these numbers to maximize cache hit rates:
+            const latMin = lat - latHalf, latMax = lat + latHalf;
+            const lonMin = lon - lonHalf, lonMax = lon + lonHalf;
+            let bbox = this.bbox(latMin, lonMin, latMax, lonMax);
+            $.ajax({
+                /*    query =
+                         "<type>\n" +
+                         "  <query>\n" +
+                         "  (<latMin>, <lonMin>, <latMax>, <lonMax>);\n" +
+                         "out;"
+                 */
+                url: 'https://overpass-api.de/api/interpreter?data='
+                    + encodeURIComponent(
+                        '[out:json];\n' +
+                        query.replaceAll('<bbox>',bbox) +
+                        '\nout geom' + bbox + ';'
+                        /*
+                        area[name="London"]["wikipedia"="en:London"]->.area_of_interest;
+                        (
+                          node(area.area_of_interest);
+                          way(area.area_of_interest);
+                          node(w);
+                        );
+                         */
+                    )
+            }).done(X => this.addLayer(X));
+        }
+
+        bbox(latMin, lonMin, latMax, lonMax) {
+            return '(' + latMin + ',' + lonMin + ',' + latMax + ',' + lonMax + ')';
+        }
+
         addLayer(X) {
-            const x = osmtogeojson(X);
-            const xx = _.groupBy(x.features, 'properties.amenity');
 
             const that = this;
-            _.forEach(xx, (subsetX,k)=>{
+            //console.log(X);
+            const x = osmtogeojson(X);
+
+
+
+            let features = x.features;
+
+            features = _.filter(features, (z)=>{
+                return z.properties.amenity || (z.geometry.type==='Polygon' ||z.geometry.type==='LineString');
+            });
+
+            //console.log(features);
+
+            const xx = _.groupBy(features, a => {
+                if (a.properties && a.properties.amenity)
+                    return a.properties.amenity;
+
+                return 'Other';
+            });
+            _.forEach(xx, (features, amenity)=>{
                 const y = _.clone(x);
-                y.features = subsetX;
-                that.load(y, k)
+                y.features = features;
+                that.load(y, amenity)
             });
 
         }
@@ -297,16 +392,18 @@
 
             new WorldWind.GeoJSONParser(x).load(null, this.shapeConfigurationCallback, y);
 
-            const Y = new WWLayer(name, y);
-            this.focus.addLayer(Y);
+            const Y = new WWLayer(name, y).disable();
+
             this.layers.push(Y);
+
+            this.focus.addLayer(Y);
+
             return Y;
         }
 
         stop(focus) {
-            //TODO
-            //this.focus.removeLayers(this.layer);
-            delete this.layer;
+            _.forEach(this.layers, focus.removeLayer);
+            delete this.layers;
         }
     }
 
@@ -315,37 +412,49 @@
         constructor(view) {
             this.view = view;
 
-
-
-
-
-
             //TODO w.clearLayers()
             view.addLayer(new WorldWind.AtmosphereLayer());
             //view.addLayer(new WorldWind.CompassLayer());
             //view.addLayer(new WorldWind.CoordinatesDisplayLayer(wwd));
-            //view.addLayer(new WorldWind.ViewControlsLayer(wwd));
+            view.addLayer(new WorldWind.ViewControlsLayer(view));
 
 
             this.layers = [];
+
+            const updatePeriodMS = 200;
+            setInterval(this.run, updatePeriodMS);
+        }
+
+        run() {
+            _.forEach(this.layers, (x)=>{
+               x.update(this);
+            });
         }
 
         position(lat, lon, alt) {
-            const cam = this.view.camera;
+            const cam = this.cam();
+            const pos = cam.position;
+            if (!lat)
+                return pos;
+
             cam.tilt = 45;
-            cam.position.latitude = lat;
-            cam.position.longitude = lon;
-            cam.position.altitude = alt;
+            pos.latitude = lat;
+            pos.longitude = lon;
+            pos.altitude = alt;
+        }
+
+        cam() {
+            return this.view.camera;
         }
 
         addLayer(layer) {
             this.layers.push(layer);
+
+            if (layer.enabled===undefined)
+                layer.enable(); //default state
+
             layer.start(this);
 
-            const e = $('<div>').attr('class', 'cell').append(layer.render(this));
-
-            $('#active').append(e);
-            layer.element = e;
         }
 
         removeLayer(layer) {
@@ -363,22 +472,32 @@
 
     window.addEventListener("load", () => {
 
-        $("#addmenu_toggle").click(()=>{
+        //console.log(WorldWind.configuration);
+        WorldWind.configuration.gpuCacheSize = 1e9; // 1gb
+        WorldWind.Logger.setLoggingLevel(WorldWind.Logger.LEVEL_WARNING);
 
-            $("#addmenu").toggle(/*"slow"*/);
-        });
+
 
         const w = new WorldWind.WorldWindow("map");
 
         const f = new Focus(w);
         f.position(40.7638, -73.98584, 1000);  //central park
 
-        f.addLayer(new WWLayer("Satellite", new WorldWind.BingAerialWithLabelsLayer()).opacity(0.5));
-        f.addLayer(new WWLayer("OSM", new WorldWind.OpenStreetMapImageLayer()).opacity(0.5));
-        //
-        //new WorldWind.BMNGOneImageLayer()
+        f.addLayer(new WWLayer("OSM", new WorldWind.OpenStreetMapImageLayer())/*.opacity(0.5)*/);
+        f.addLayer(new WWLayer("Satellite", new WorldWind.BingAerialWithLabelsLayer()).disable());
+        //f.addLayer(new WWLayer("BMGNOne", new WorldWind.BMNGOneImageLayer()).disable());
 
-        new OSMNodes(f);
+        const pos = f.position();
+        // new OSMNodes(f).update('node[amenity]<bbox>;',
+        //     pos.latitude, pos.longitude, (40.78568 - 40.7638) / 2);
+        new OSMNodes(f).update(
+            //'(way[highway]<bbox>; relation<bbox>; node<bbox>;);'
+            '(way<bbox>; node<bbox>;);'
+            ,pos.latitude, pos.longitude, (40.78568 - 40.7638) / 8)
+
+        $("#addmenu_toggle").click(()=>{
+            $("#addmenu").toggle(/*"slow"*/);
+        });
 
         {
             $.ajax({
