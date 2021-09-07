@@ -59,10 +59,6 @@
             color: white;
         }
 
-        #mode_raw {
-            max-height: 12em;
-            overflow: scroll;
-        }
 
         #mode_idiocracy button {
             margin: 1em;
@@ -118,8 +114,6 @@
             <button title="Clear"><i class="fa fa-times" aria-hidden="true"></i></button>
             <button title="Amenity"><i class="fa fa-wrench" aria-hidden="true"></i></button>
             <button title="Idiocracy"><i class="fa fa-trophy" aria-hidden="true"></i></button>
-        </div>
-        <div id="mode_raw">
         </div>
         <div id="mode_idiocracy">
             <button>fuck</button>
@@ -283,8 +277,10 @@
                     // }
                 } else if (geometry.isLineStringType() || geometry.isMultiLineStringType()) {
                     cfg.attributes = new WorldWind.ShapeAttributes(null);
+                    cfg.attributes.depthTest = false;
+                    cfg.attributes.drawInterior = false;
                     //configuration.attributes.drawOutline = false;
-                    cfg.attributes.outlineWidth = 2.0;
+                    cfg.attributes.outlineWidth = 2;
                     cfg.attributes.outlineColor = new WorldWind.Color(
                         0.375 + 0.5 * Math.random(),
                         0.375 + 0.5 * Math.random(),
@@ -292,8 +288,8 @@
                         0.9);
                 } else if (geometry.isPolygonType() || geometry.isMultiPolygonType()) {
                     cfg.attributes = new WorldWind.ShapeAttributes(null);
+                    cfg.attributes.depthTest = false;
                     cfg.attributes.drawOutline = false;
-
                     // Fill the polygon with a random pastel color.
                     cfg.attributes.interiorColor = new WorldWind.Color(
                         0.375 + 0.5 * Math.random(),
@@ -324,18 +320,10 @@
             const lonMin = lon - lonHalf, lonMax = lon + lonHalf;
             const bbox = this.bbox(latMin, lonMin, latMax, lonMax);
             $.ajax({
-                /*    query =
-                         "<type>\n" +
-                         "  <query>\n" +
-                         "  (<latMin>, <lonMin>, <latMax>, <lonMax>);\n" +
-                         "out;"
-                 */
                 url: 'https://overpass-api.de/api/interpreter?data='
-                    + encodeURIComponent(
-                        '[out:json];\n' +
-                        query.replaceAll('<bbox>',bbox) +
-                        '\nout geom' + bbox + ';'
-                    )
+                      + encodeURIComponent(
+                        '[out:json];\n' + query.replaceAll('<bbox>',bbox) + '\nout geom' + bbox + ';'
+                      )
             }).done(X => this.addLayer(X));
         }
 
@@ -353,24 +341,35 @@
 
             let features = x.features;
 
-            features = _.filter(features, (z)=>{
-                return z.properties.amenity || (z.geometry.type==='Polygon' ||z.geometry.type==='LineString');
-            });
+            // features = _.filter(features, (z)=>{
+            //     return z.properties.amenity || (z.geometry.type==='Polygon' ||z.geometry.type==='LineString');
+            // });
 
             //console.log(features);
 
             const xx = _.groupBy(features, a => {
-                if (a.properties && a.properties.amenity)
-                    return a.properties.amenity;
-
+                if (a.properties) {
+                    if (a.properties.amenity)
+                        return a.properties.amenity;
+                    if (a.properties.highway)
+                        return 'Way';
+                    if (a.properties.barrier)
+                        return 'Barrier';
+                    if (a.properties.power)
+                        return 'Power';
+                    if (a.properties.boundary)
+                        return 'Boundary'
+                    if (a.properties.waterway)
+                        return 'Water'
+                    if (a.properties.building)
+                        return 'Building'
+                }
+                //console.log(a);
                 return 'Other';
             });
             _.forEach(xx, (features, amenity)=>{
                 //const y = _.clone(x);
                 const y = _.cloneDeep(x);
-                // const y = _.create(x, {
-                //     features: features
-                // });
                 y.features = features;
                 that.load(y, amenity)
             });
@@ -378,9 +377,28 @@
         }
 
         load(x, name) {
-            const y = new WorldWind.RenderableLayer();
+            var y = new WorldWind.RenderableLayer();
+            // const y_addRenderable = y.addRenderable;
+            // y.addRenderable = (z)=>{
+            //     console.log(z);
+            //     y_addRenderable(z);
+            // };
 
-            new WorldWind.GeoJSONParser(x).load(null, this.shapeConfigurationCallback, y);
+            const p = new WorldWind.GeoJSONParser(x);
+
+            p.load(null, this.shapeConfigurationCallback, y);
+
+            //HACK filter
+            // let y0 = y.renderables;
+            // y = new WorldWind.RenderableLayer();
+            // _.forEach(y0, (yy)=>{
+            //    if (yy.displayName==='Surface Shape') {
+            //        console.log(yy);
+            //        yy = new WorldWind.SurfacePolygon(yy.boundaries, yy.attributes);
+            //
+            //    }
+            //    y.addRenderable(yy);
+            // });
 
             const Y = new WWLayer(name, y).disable();
 
@@ -416,7 +434,7 @@
             this.layers = [];
 
             const updatePeriodMS = 200;
-            setInterval(this.run, updatePeriodMS);
+            this.running = setInterval(this.run, updatePeriodMS);
         }
 
         run() {
@@ -483,7 +501,10 @@
         //view.addLayer(new WorldWind.CompassLayer());
         //view.addLayer(new WorldWind.CoordinatesDisplayLayer(wwd));
 
-        var pos = f.position(40.7638, -73.98584, 1000);  //central park
+        var pos = f.position(
+            //40.7638, -73.98584, 1000
+            46.232321,6.0505552, 1000
+        );  //central park
 
         const countriesLayer = new WorldWind.RenderableLayer("Countries");
         const shapefileLibrary = "https://worldwind.arc.nasa.gov/web/examples/data/shapefiles/naturalearth";
@@ -525,33 +546,33 @@
 
         const osm = new OSMNodes(f);
         osm.update(
-            //'(way[highway]<bbox>; relation<bbox>; node<bbox>;);'
             '(way<bbox>; node<bbox>;);'
-            ,pos.latitude, pos.longitude, (40.78568 - 40.7638) / 8)
+            //'(way[highway]<bbox>; relation<bbox>; node<bbox>;);'
+            , pos.latitude, pos.longitude, 0.007)
 
         $("#addmenu_toggle").click(()=>{
             $("#addmenu").toggle(/*"slow"*/);
         });
 
-        {
-            $.ajax({
-                url: 'osm.tags.popular.json',
-            }).done(tags => {
-                const raw = $('#mode_raw');
-               _.forEach(tags.data, tag=>{
-                   const key = tag.key, value = tag.value;
-
-                   //filters
-                   if (key === 'source' || key === 'source_ref' || key === 'import_uuid'
-                       || key === 'FIXME' || key === 'fixme' || key === 'start_date' || key === 'gauge' || key === 'note'
-                       || key === 'attribution' || key === 'mapper'
-                   )
-                       return;
-
-                   raw.append($('<button>').append(key + '=' + value));
-               });
-            });
-        }
+        // {
+        //     $.ajax({
+        //         url: 'osm.tags.popular.json',
+        //     }).done(tags => {
+        //         const raw = $('#mode_raw');
+        //        _.forEach(tags.data, tag=>{
+        //            const key = tag.key, value = tag.value;
+        //
+        //            //filters
+        //            if (key === 'source' || key === 'source_ref' || key === 'import_uuid'
+        //                || key === 'FIXME' || key === 'fixme' || key === 'start_date' || key === 'gauge' || key === 'note'
+        //                || key === 'attribution' || key === 'mapper'
+        //            )
+        //                return;
+        //
+        //            raw.append($('<button>').append(key + '=' + value));
+        //        });
+        //     });
+        // }
 
 
         // var cy = cytoscape({
