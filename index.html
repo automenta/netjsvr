@@ -257,12 +257,7 @@
                 WorldWind.OFFSET_FRACTION, 1.5);
 
             this.shapeConfigurationCallback = (geometry, properties) => {
-                const configuration = {};
-
-                // _.forEach(properties, (k,p) => {
-                //     console.log(p);
-                //     //console.log(p.amenity);
-                // });
+                const cfg = {};
 
                 if (geometry.isPointType() || geometry.isMultiPointType()) {
                     const v = new WorldWind.PlacemarkAttributes(attr);
@@ -277,31 +272,30 @@
                             v.imageColor = WorldWind.Color.RED;
                     }
                     //v.imageColor = JSON.toString(properties).hash
-                    configuration.attributes = v;
+                    cfg.attributes = v;
 
                     if (properties && (properties.name || properties.Name || properties.NAME)) {
-                        configuration.name = properties.name || properties.Name || properties.NAME;
+                        cfg.name = properties.name || properties.Name || properties.NAME;
                     }
                     // if (properties && properties.POP_MAX) {
                     //     const population = properties.POP_MAX;
                     //     configuration.attributes.imageScale = 0.01 * Math.log(population);
                     // }
                 } else if (geometry.isLineStringType() || geometry.isMultiLineStringType()) {
-                    configuration.attributes = new WorldWind.ShapeAttributes(null);
-                    configuration.attributes.drawOutline = true;
-                    configuration.attributes.interiorColor = new WorldWind.Color(
+                    cfg.attributes = new WorldWind.ShapeAttributes(null);
+                    //configuration.attributes.drawOutline = false;
+                    cfg.attributes.outlineWidth = 2.0;
+                    cfg.attributes.outlineColor = new WorldWind.Color(
                         0.375 + 0.5 * Math.random(),
                         0.375 + 0.5 * Math.random(),
                         0.375 + 0.5 * Math.random(),
-                        1.0);
-
-                    //configuration.attributes.outlineWidth = 2.0;
+                        0.9);
                 } else if (geometry.isPolygonType() || geometry.isMultiPolygonType()) {
-                    configuration.attributes = new WorldWind.ShapeAttributes(null);
-                    configuration.attributes.drawOutline = false;
+                    cfg.attributes = new WorldWind.ShapeAttributes(null);
+                    cfg.attributes.drawOutline = false;
 
                     // Fill the polygon with a random pastel color.
-                    configuration.attributes.interiorColor = new WorldWind.Color(
+                    cfg.attributes.interiorColor = new WorldWind.Color(
                         0.375 + 0.5 * Math.random(),
                         0.375 + 0.5 * Math.random(),
                         0.375 + 0.5 * Math.random(),
@@ -314,7 +308,7 @@
                     //     1.0);
                 }
 
-                return configuration;
+                return cfg;
             };
 
 
@@ -328,7 +322,7 @@
             //TODO dither these numbers to maximize cache hit rates:
             const latMin = lat - latHalf, latMax = lat + latHalf;
             const lonMin = lon - lonHalf, lonMax = lon + lonHalf;
-            let bbox = this.bbox(latMin, lonMin, latMax, lonMax);
+            const bbox = this.bbox(latMin, lonMin, latMax, lonMax);
             $.ajax({
                 /*    query =
                          "<type>\n" +
@@ -341,14 +335,6 @@
                         '[out:json];\n' +
                         query.replaceAll('<bbox>',bbox) +
                         '\nout geom' + bbox + ';'
-                        /*
-                        area[name="London"]["wikipedia"="en:London"]->.area_of_interest;
-                        (
-                          node(area.area_of_interest);
-                          way(area.area_of_interest);
-                          node(w);
-                        );
-                         */
                     )
             }).done(X => this.addLayer(X));
         }
@@ -380,7 +366,11 @@
                 return 'Other';
             });
             _.forEach(xx, (features, amenity)=>{
-                const y = _.clone(x);
+                //const y = _.clone(x);
+                const y = _.cloneDeep(x);
+                // const y = _.create(x, {
+                //     features: features
+                // });
                 y.features = features;
                 that.load(y, amenity)
             });
@@ -412,11 +402,15 @@
         constructor(view) {
             this.view = view;
 
-            //TODO w.clearLayers()
-            view.addLayer(new WorldWind.AtmosphereLayer());
-            //view.addLayer(new WorldWind.CompassLayer());
-            //view.addLayer(new WorldWind.CoordinatesDisplayLayer(wwd));
-            view.addLayer(new WorldWind.ViewControlsLayer(view));
+            // console.log(view.drawContext);
+
+            // const b = view.drawContext.surfaceShapeTileBuilder;
+            // console.log(b);
+            //b.detailControl = 2;
+            // b.tileWidth = b.tileHeight =
+            //     b.levels.tileWidth = b.levels.tileHeight = //HACK
+            //     1024;
+            //b.clear();
 
 
             this.layers = [];
@@ -434,13 +428,13 @@
         position(lat, lon, alt) {
             const cam = this.cam();
             const pos = cam.position;
-            if (!lat)
-                return pos;
-
-            cam.tilt = 45;
-            pos.latitude = lat;
-            pos.longitude = lon;
-            pos.altitude = alt;
+            if (lat && lon && alt) {
+                cam.tilt = 45;
+                pos.latitude = lat;
+                pos.longitude = lon;
+                pos.altitude = alt;
+            }
+            return pos;
         }
 
         cam() {
@@ -479,18 +473,58 @@
 
 
         const w = new WorldWind.WorldWindow("map");
+        //w.deepPicking = true;
+        //console.log(w);
 
         const f = new Focus(w);
-        f.position(40.7638, -73.98584, 1000);  //central park
+        //TODO w.clearLayers()
+        f.addLayer(new WWLayer("Atmosphere", new WorldWind.AtmosphereLayer()).disable());
+        f.addLayer(new WWLayer("View Controls", new WorldWind.ViewControlsLayer(w)).disable());
+        //view.addLayer(new WorldWind.CompassLayer());
+        //view.addLayer(new WorldWind.CoordinatesDisplayLayer(wwd));
+
+        var pos = f.position(40.7638, -73.98584, 1000);  //central park
+
+        const countriesLayer = new WorldWind.RenderableLayer("Countries");
+        const shapefileLibrary = "https://worldwind.arc.nasa.gov/web/examples/data/shapefiles/naturalearth";
+        new WorldWind.Shapefile(shapefileLibrary + "/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp")
+            .load(null, (attributes, record) => {
+                const cfg = {};
+                cfg.name = attributes.values.name || attributes.values.Name || attributes.values.NAME;
+
+                if (record.isPointType()) { // Configure point-based features (cities, in this example)
+                    cfg.name = attributes.values.name || attributes.values.Name || attributes.values.NAME;
+                    cfg.attributes = new WorldWind.PlacemarkAttributes(placemarkAttributes);
+
+                } else if (record.isPolygonType()) { // Configure polygon-based features (countries, in this example).
+                    cfg.attributes = new WorldWind.ShapeAttributes(null);
+                    cfg.attributes.drawInterior = false;
+                    cfg.attributes.outlineWidth = 4;
+                    cfg.attributes.outlineColor = new WorldWind.Color(
+                        0.375 + 0.5 * Math.random(),
+                        0.375 + 0.5 * Math.random(),
+                        0.375 + 0.5 * Math.random(),
+                        1.0);
+                }
+
+                return cfg;
+        }, countriesLayer);
+        f.addLayer(new WWLayer("Countries", countriesLayer).disable());
+
+        // const cityLayer = new WorldWind.RenderableLayer("Cities");
+        // const cityShapefile = new WorldWind.Shapefile(shapefileLibrary + "/ne_50m_populated_places_simple/ne_50m_populated_places_simple.shp");
+        // cityShapefile.load(null, shapeConfigurationCallback, cityLayer);
+        // wwd.addLayer(cityLayer);
 
         f.addLayer(new WWLayer("OSM", new WorldWind.OpenStreetMapImageLayer())/*.opacity(0.5)*/);
         f.addLayer(new WWLayer("Satellite", new WorldWind.BingAerialWithLabelsLayer()).disable());
         //f.addLayer(new WWLayer("BMGNOne", new WorldWind.BMNGOneImageLayer()).disable());
 
-        const pos = f.position();
         // new OSMNodes(f).update('node[amenity]<bbox>;',
         //     pos.latitude, pos.longitude, (40.78568 - 40.7638) / 2);
-        new OSMNodes(f).update(
+
+        const osm = new OSMNodes(f);
+        osm.update(
             //'(way[highway]<bbox>; relation<bbox>; node<bbox>;);'
             '(way<bbox>; node<bbox>;);'
             ,pos.latitude, pos.longitude, (40.78568 - 40.7638) / 8)
