@@ -239,7 +239,7 @@
         constructor(focus) {
 
             this.focus = focus;
-            const layers = [];
+            const layers = new Map();
             this.layers = layers;
 
             const attr = new WorldWind.PlacemarkAttributes(null);
@@ -387,130 +387,110 @@
 
         }
 
-        load(x, name) {
-            var y = new WorldWind.RenderableLayer();
-            // const y_addRenderable = y.addRenderable;
-            // y.addRenderable = (z)=>{
-            //     console.log(z);
-            //     y_addRenderable(z);
-            // };
+        layer(x) {
+            var y = this.layers.get(x);
+            if (!y) {
+                y = new WWLayer(x, new WorldWind.RenderableLayer()).disable();
+                this.layers.set(x, y);
+                this.focus.addLayer(y);
+            }
+            return y;
+        }
 
+        load(x, name) {
+
+            const ll = [];
             const p = new WorldWind.GeoJSONParser(x);
 
             const altitudeDefault = 10;
 
             p.addRenderablesForPolygon = function(layer, geometry, properties) {
 
+                if (!(!this.crs || this.crs.isCRSSupported()))
+                    return;
+
                 const cfg = this.shapeConfigurationCallback(geometry, properties);
 
-                if (!this.crs || this.crs.isCRSSupported()) {
+                const b = [];
+                const boundaries = geometry.coordinates;
+                for (let boundariesIndex = 0; boundariesIndex < boundaries.length; boundariesIndex++) {
+                    const positions = [];
+                    const points = boundaries[boundariesIndex];
+                    for (let positionIndex = 0; positionIndex < points.length; positionIndex++) {
+                        const pp = points[positionIndex];
+                        const
+                            lon = pp[0],
+                            lat = pp[1],
+                            alt = pp[2] ? pp[2] : altitudeDefault;
 
-
-                    const b = [];
-                    const boundaries = geometry.coordinates;
-                    for (let boundariesIndex = 0; boundariesIndex < boundaries.length; boundariesIndex++) {
-                        const positions = [];
-                        const points = boundaries[boundariesIndex];
-                        for (let positionIndex = 0; positionIndex < points.length; positionIndex++) {
-                            const pp = points[positionIndex];
-                            const
-                                lon = pp[0],
-                                lat = pp[1],
-                                alt = pp[2] ? pp[2] : altitudeDefault;
-
-                            const reprojectedCoordinate = this.getReprojectedIfRequired(
-                                lat,
-                                lon,
-                                this.crs);
-                            positions.push(new WorldWind.Position(reprojectedCoordinate[1], reprojectedCoordinate[0], alt));
-                        }
-                        b.push(positions);
+                        const reprojectedCoordinate = this.getReprojectedIfRequired(
+                            lat,
+                            lon,
+                            this.crs);
+                        positions.push(new WorldWind.Position(reprojectedCoordinate[1], reprojectedCoordinate[0], alt));
                     }
-
-                    cfg.attributes.drawOutline = false;
-                    cfg.attributes.depthTest = true;
-                    cfg.attributes.drawVerticals = false;
-                    cfg.attributes.applyLighting = cfg.attributes.enableLighting = false;
-
-                    const shape = new WorldWind.Polygon(
-                            b,
-                            cfg && cfg.attributes ? cfg.attributes : null);
-
-                    shape.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
-                    shape.extrude = true;
-
-                    //shape.applyLighting = true;
-
-                    if (cfg && cfg.highlightAttributes)
-                        shape.highlightAttributes = cfg.highlightAttributes;
-                    if (cfg && cfg.pickDelegate)
-                        shape.pickDelegate = cfg.pickDelegate;
-                    if (cfg && cfg.userProperties)
-                        shape.userProperties = cfg.userProperties;
-
-                    layer.addRenderable(shape);
+                    b.push(positions);
                 }
+                cfg.attributes.drawOutline = false;
+                cfg.attributes.depthTest = true;
+                cfg.attributes.drawVerticals = true;
+                cfg.attributes.applyLighting = cfg.attributes.enableLighting = true;
+                const shape = new WorldWind.Polygon(
+                    b,
+                    cfg && cfg.attributes ? cfg.attributes : null);
+                shape.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
+                shape.extrude = true;
+                if (cfg && cfg.highlightAttributes)
+                    shape.highlightAttributes = cfg.highlightAttributes;
+                if (cfg && cfg.pickDelegate)
+                    shape.pickDelegate = cfg.pickDelegate;
+                if (cfg && cfg.userProperties)
+                    shape.userProperties = cfg.userProperties;
+                ll.push(shape);
             };
             p.addRenderablesForLineString = function (layer, geometry, properties) {
+
+                if (!(!this.crs || this.crs.isCRSSupported()))
+                    return;
+
                 const cfg = this.shapeConfigurationCallback(geometry, properties);
 
-                if (!this.crs || this.crs.isCRSSupported()) {
-                    const positions = [];
-                    const points = geometry.coordinates;
-                    for (let pointsIndex = 0; pointsIndex < points.length; pointsIndex++) {
-                        const pp = points[pointsIndex];
-                        const longitude = pp[0],
-                            latitude = pp[1],
-                            altitude = pp[2] ? pp[2] : altitudeDefault/2;
-                        const reprojectedCoordinate = this.getReprojectedIfRequired(
-                            latitude,
-                            longitude,
-                            this.crs);
-                        positions.push(new WorldWind.Position(reprojectedCoordinate[1], reprojectedCoordinate[0], altitude));
-                    }
-
-                    cfg.attributes.depthTest = true;
-                    //cfg.attributes.outlineWidth = 64;
-                    cfg.attributes.interiorColor = new WorldWind.Color(1, 0.5, 0, 0.5);
-                    cfg.attributes.drawInterior = true;
-                    //cfg.attributes.outlineColor = new WorldWind.Color(1, 0, 1, 1);
-                    cfg.attributes.drawOutline = false;
-
-                    const path =
-                        new WorldWind.Path(
-                        //new WorldWind.SurfacePolyline(
-                            positions, cfg.attributes);
-                    path.altitudeMode = WorldWind.RELATIVE_TO_GROUND; // The path's altitude stays relative to the terrain's altitude.
-                    path.followTerrain = true;
-                    path.extrude = true; // Make it a curtain.
-                    path._numSubSegments = 3;
-                    //path.useSurfaceShapeFor2D = true; // Use a surface shape in 2D mode.
-
-                    if (cfg && cfg.highlightAttributes) path.highlightAttributes = cfg.highlightAttributes;
-                    if (cfg && cfg.pickDelegate) path.pickDelegate = cfg.pickDelegate;
-                    if (cfg && cfg.userProperties) path.userProperties = cfg.userProperties;
-                    layer.addRenderable(path);
+                const positions = [];
+                const points = geometry.coordinates;
+                for (let pointsIndex = 0; pointsIndex < points.length; pointsIndex++) {
+                    const pp = points[pointsIndex];
+                    const longitude = pp[0],
+                        latitude = pp[1],
+                        altitude = pp[2] ? pp[2] : altitudeDefault / 2;
+                    const reprojectedCoordinate = this.getReprojectedIfRequired(
+                        latitude,
+                        longitude,
+                        this.crs);
+                    positions.push(new WorldWind.Position(reprojectedCoordinate[1], reprojectedCoordinate[0], altitude));
                 }
+                cfg.attributes.depthTest = true;
+                cfg.attributes.interiorColor = new WorldWind.Color(1, 0.5, 0, 0.5);
+                cfg.attributes.drawInterior = true;
+                cfg.attributes.drawOutline = false;
+                const path =
+                    new WorldWind.Path(
+                        //new WorldWind.SurfacePolyline(
+                        positions, cfg.attributes);
+                path.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
+                path.followTerrain = true;
+                path.extrude = true;
+                path._numSubSegments = 3;
+                if (cfg && cfg.highlightAttributes) path.highlightAttributes = cfg.highlightAttributes;
+                if (cfg && cfg.pickDelegate) path.pickDelegate = cfg.pickDelegate;
+                if (cfg && cfg.userProperties) path.userProperties = cfg.userProperties;
+                ll.push(path);
             };
-            p.load(null, this.shapeConfigurationCallback, y);
 
-            //HACK filter
-            // let y0 = y.renderables;
-            // y = new WorldWind.RenderableLayer();
-            // _.forEach(y0, (yy)=>{
-            //    if (yy.displayName==='Surface Shape') {
-            //        console.log(yy);
-            //        yy = new WorldWind.SurfacePolygon(yy.boundaries, yy.attributes);
-            //
-            //    }
-            //    y.addRenderable(yy);
-            // });
+            const Y = this.layer(name);
+            const yl = Y.l; yl.removeAllRenderables();
 
-            const Y = new WWLayer(name, y).disable();
-
-            this.layers.push(Y);
-
-            this.focus.addLayer(Y);
+            p.load(null, this.shapeConfigurationCallback, yl);
+            _.forEach(ll, yy => yl.addRenderable(yy));
 
             return Y;
         }
