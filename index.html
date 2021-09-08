@@ -288,14 +288,14 @@
                         0.9);
                 } else if (geometry.isPolygonType() || geometry.isMultiPolygonType()) {
                     cfg.attributes = new WorldWind.ShapeAttributes(null);
-                    cfg.attributes.depthTest = false;
+                    //cfg.attributes.depthTest = false;
                     cfg.attributes.drawOutline = false;
                     // Fill the polygon with a random pastel color.
                     cfg.attributes.interiorColor = new WorldWind.Color(
                         0.375 + 0.5 * Math.random(),
                         0.375 + 0.5 * Math.random(),
                         0.375 + 0.5 * Math.random(),
-                        0.9);
+                        1);
                     // Paint the outline in a darker variant of the interior color.
                     // configuration.attributes.outlineColor = new WorldWind.Color(
                     //     0.5 * configuration.attributes.interiorColor.red,
@@ -311,19 +311,30 @@
         }
 
 
-        update(query, lat, lon, lonHalf, latHalf) {
-            if (!latHalf)
-                latHalf = lonHalf; //TODO based on latitude
+        update(query, lat, lon, latHalf, lonHalf) {
+            if (!lonHalf)
+                lonHalf = latHalf; //TODO based on latitude
 
-            //TODO dither these numbers to maximize cache hit rates:
+
             const latMin = lat - latHalf, latMax = lat + latHalf;
             const lonMin = lon - lonHalf, lonMax = lon + lonHalf;
-            const bbox = this.bbox(latMin, lonMin, latMax, lonMax);
+
+            //dither these numbers to maximize cache hit rates:
+            const bbox = this.bbox(
+                _.round(latMin, 3), _.round(lonMin, 3),
+                _.round(latMax, 3), _.round(lonMax, 3));
+
             $.ajax({
                 url: 'https://overpass-api.de/api/interpreter?data='
                       + encodeURIComponent(
                         '[out:json];\n' + query.replaceAll('<bbox>',bbox) + '\nout geom' + bbox + ';'
-                      )
+                      ),
+                contentType : 'application/json',
+                dataType : 'json',
+                headers: {
+                    "Accepts": "text/plain; charset=utf-8",
+                    "Cache-Control": 'max-age=3600'//<seconds>
+                }
             }).done(X => this.addLayer(X));
         }
 
@@ -386,6 +397,101 @@
 
             const p = new WorldWind.GeoJSONParser(x);
 
+            const altitudeDefault = 10;
+
+            p.addRenderablesForPolygon = function(layer, geometry, properties) {
+
+                const cfg = this.shapeConfigurationCallback(geometry, properties);
+
+                if (!this.crs || this.crs.isCRSSupported()) {
+
+
+                    const b = [];
+                    const boundaries = geometry.coordinates;
+                    for (let boundariesIndex = 0; boundariesIndex < boundaries.length; boundariesIndex++) {
+                        const positions = [];
+                        const points = boundaries[boundariesIndex];
+                        for (let positionIndex = 0; positionIndex < points.length; positionIndex++) {
+                            const pp = points[positionIndex];
+                            const
+                                lon = pp[0],
+                                lat = pp[1],
+                                alt = pp[2] ? pp[2] : altitudeDefault;
+
+                            const reprojectedCoordinate = this.getReprojectedIfRequired(
+                                lat,
+                                lon,
+                                this.crs);
+                            positions.push(new WorldWind.Position(reprojectedCoordinate[1], reprojectedCoordinate[0], alt));
+                        }
+                        b.push(positions);
+                    }
+
+                    cfg.attributes.drawOutline = false;
+                    cfg.attributes.depthTest = true;
+                    cfg.attributes.drawVerticals = false;
+                    cfg.attributes.applyLighting = cfg.attributes.enableLighting = false;
+
+                    const shape = new WorldWind.Polygon(
+                            b,
+                            cfg && cfg.attributes ? cfg.attributes : null);
+
+                    shape.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
+                    shape.extrude = true;
+
+                    //shape.applyLighting = true;
+
+                    if (cfg && cfg.highlightAttributes)
+                        shape.highlightAttributes = cfg.highlightAttributes;
+                    if (cfg && cfg.pickDelegate)
+                        shape.pickDelegate = cfg.pickDelegate;
+                    if (cfg && cfg.userProperties)
+                        shape.userProperties = cfg.userProperties;
+
+                    layer.addRenderable(shape);
+                }
+            };
+            p.addRenderablesForLineString = function (layer, geometry, properties) {
+                const cfg = this.shapeConfigurationCallback(geometry, properties);
+
+                if (!this.crs || this.crs.isCRSSupported()) {
+                    const positions = [];
+                    const points = geometry.coordinates;
+                    for (let pointsIndex = 0; pointsIndex < points.length; pointsIndex++) {
+                        const pp = points[pointsIndex];
+                        const longitude = pp[0],
+                            latitude = pp[1],
+                            altitude = pp[2] ? pp[2] : altitudeDefault/2;
+                        const reprojectedCoordinate = this.getReprojectedIfRequired(
+                            latitude,
+                            longitude,
+                            this.crs);
+                        positions.push(new WorldWind.Position(reprojectedCoordinate[1], reprojectedCoordinate[0], altitude));
+                    }
+
+                    cfg.attributes.depthTest = true;
+                    //cfg.attributes.outlineWidth = 64;
+                    cfg.attributes.interiorColor = new WorldWind.Color(1, 0.5, 0, 0.5);
+                    cfg.attributes.drawInterior = true;
+                    //cfg.attributes.outlineColor = new WorldWind.Color(1, 0, 1, 1);
+                    cfg.attributes.drawOutline = false;
+
+                    const path =
+                        new WorldWind.Path(
+                        //new WorldWind.SurfacePolyline(
+                            positions, cfg.attributes);
+                    path.altitudeMode = WorldWind.RELATIVE_TO_GROUND; // The path's altitude stays relative to the terrain's altitude.
+                    path.followTerrain = true;
+                    path.extrude = true; // Make it a curtain.
+                    path._numSubSegments = 3;
+                    //path.useSurfaceShapeFor2D = true; // Use a surface shape in 2D mode.
+
+                    if (cfg && cfg.highlightAttributes) path.highlightAttributes = cfg.highlightAttributes;
+                    if (cfg && cfg.pickDelegate) path.pickDelegate = cfg.pickDelegate;
+                    if (cfg && cfg.userProperties) path.userProperties = cfg.userProperties;
+                    layer.addRenderable(path);
+                }
+            };
             p.load(null, this.shapeConfigurationCallback, y);
 
             //HACK filter
