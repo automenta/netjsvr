@@ -76,8 +76,12 @@
         #active {
             height: 100%;
             overflow: auto;
+            direction: rtl;
+            display: flow;
         }
+
         .cell {
+            direction: ltr; /* unset? */
             background-color: rgba(0.7, 0.7, 0.7, 0.75);
             color: white;
 
@@ -164,7 +168,7 @@
         constructor(name) {
             this.name = name;
             this.element = $('<div>');
-            this.enabled = null;
+            this.enabled = undefined;
         }
 
         start(focus) {
@@ -181,19 +185,28 @@
             //
         }
 
-        enable() {
-            if (this.enabled!==true) {
-                this.enabled = true;
-                this.element.addClass('cell_enabled');
+        set enabled(e) {
+            if (this._enabled !== e) {
+                this._enabled = e;
+                const ele = this.element;
+                if (ele) {
+                    if (e) ele.addClass('cell_enabled');
+                    else ele.removeClass('cell_enabled');
+                }
             }
+        }
+
+        get enabled() {
+            return this._enabled;
+        }
+
+        enable() {
+            this.enabled = true;
             return this;
         }
 
         disable() {
-            if (this.enabled!==false) {
-                this.enabled = false;
-                this.element.removeClass('cell_enabled');
-            }
+            this.enabled = false;
             return this;
         }
 
@@ -247,13 +260,13 @@
             const enabler = $('<div>').addClass('enabler').addClass('buttonlike').text(toggleLabel());
 
             const enablement = () => {
-                if (layer.enabled) this.disable(); else this.enable();
                 enabler.text(toggleLabel());
             };
 
-            enabler.text(toggleLabel());
+            enablement(); //initialize
 
             enabler.click(()=>{
+                if (layer.enabled) this.disable(); else this.enable();
                 enablement();
                 focus.view.redraw();
             });
