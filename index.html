@@ -77,23 +77,44 @@
             height: 100%;
             overflow: auto;
         }
-        #active .cell {
-            background-color: rgba(0.5, 0.5, 0.5, 0.5);
-            color: #bbb;
+        .cell {
+            background-color: rgba(0.7, 0.7, 0.7, 0.75);
+            color: white;
 
             /*opacity:0.9;*/
             width: auto;
 
             padding: 0.1em;
-            margin: 0.1em;
+            margin: 0.2em;
 
             /*min-width: 25px;*/
         }
-        #active .cell_enabled {
-            background-color: rgba(0.6, 0.6, 0.6, 0.8) !important;
-            color: orange;
+        .cell_enabled {
+            background-color: rgba(1, 1, 1, 0.9) !important;
+            padding-top: 0.5em;
+            padding-bottom: 0.5em;
         }
 
+        .cell .enabler {
+            float: left;
+            clear: both;
+            height: 1em;
+            width: 1em;
+        }
+        .cell .controls {
+            font-size: 80%;
+        }
+        .buttonlike {
+            cursor: pointer;
+        }
+        .buttonlike:hover {
+            //outline: 1px solid orange;
+            color: darkorange;
+            background-color: rgba(1,0.5,1,0.9) !important;
+        }
+        .buttonlike:active {
+            color: gold;
+        }
     </style>
 
 <!--    <script src="https://code.jquery.com/mobile/1.5.0-rc1/jquery.mobile-1.5.0-rc1.min.js" type="text/javascript"></script>-->
@@ -143,6 +164,7 @@
         constructor(name) {
             this.name = name;
             this.element = $('<div>');
+            this.enabled = null;
         }
 
         start(focus) {
@@ -197,12 +219,12 @@
         start(focus) {
             super.start(focus);
             focus.view.addLayer(this.l);
-            focus.view.redraw(); //TODO debounce
+            //focus.view.redraw(); //TODO debounce
         }
         stop(focus) {
             super.stop(focus);
             focus.view.removeLayer(this.l);
-            focus.view.redraw(); //TODO debounce
+            //focus.view.redraw(); //TODO debounce
         }
 
         enable() {
@@ -221,16 +243,38 @@
             const layer = this.l;
 
             const toggleLabel = () => layer.enabled ? "+" : "-";
-            const toggle = $('<button>').text(toggleLabel());
-            toggle.click(() => {
+
+            const enabler = $('<div>').addClass('enabler').addClass('buttonlike').text(toggleLabel());
+
+            const enablement = () => {
                 if (layer.enabled) this.disable(); else this.enable();
-                toggle.text(toggleLabel());
+                enabler.text(toggleLabel());
+            };
+
+            enabler.text(toggleLabel());
+
+            enabler.click(()=>{
+                enablement();
                 focus.view.redraw();
             });
 
-            const label = $('<span>').text(this.name);
+            const emotions = $('<div>').append(
+                '+- = 0'
+            );
 
-            return $('<div>').append(toggle, label);
+            const display = $('<div>').append(
+                'opacity = 100%'
+            );
+
+            const controls = $('<div>').addClass('controls').hide().append(
+                emotions, display
+            );
+
+            const label = $('<div>').addClass('label').addClass('buttonlike').text(this.name).click(()=>{
+                controls.toggle();
+            });
+
+            return $('<div>').append(enabler, label, controls);
         }
     }
 
@@ -278,14 +322,14 @@
                 } else if (geometry.isLineStringType() || geometry.isMultiLineStringType()) {
                     cfg.attributes = new WorldWind.ShapeAttributes(null);
                     cfg.attributes.depthTest = false;
-                    cfg.attributes.drawInterior = false;
-                    //configuration.attributes.drawOutline = false;
-                    cfg.attributes.outlineWidth = 2;
-                    cfg.attributes.outlineColor = new WorldWind.Color(
-                        0.375 + 0.5 * Math.random(),
-                        0.375 + 0.5 * Math.random(),
-                        0.375 + 0.5 * Math.random(),
-                        0.9);
+                    cfg.attributes.drawInterior = true;
+                    cfg.attributes.drawOutline = false;
+                    // cfg.attributes.outlineWidth = 2;
+                    // cfg.attributes.outlineColor = new WorldWind.Color(
+                    //     0.375 + 0.5 * Math.random(),
+                    //     0.375 + 0.5 * Math.random(),
+                    //     0.375 + 0.5 * Math.random(),
+                    //     0.9);
                 } else if (geometry.isPolygonType() || geometry.isMultiPolygonType()) {
                     cfg.attributes = new WorldWind.ShapeAttributes(null);
                     //cfg.attributes.depthTest = false;
@@ -359,28 +403,22 @@
             //console.log(features);
 
             const xx = _.groupBy(features, a => {
-                if (a.properties) {
-                    if (a.properties.amenity)
-                        return a.properties.amenity;
-                    if (a.properties.highway)
-                        return 'Way';
-                    if (a.properties.barrier)
-                        return 'Barrier';
-                    if (a.properties.power)
-                        return 'Power';
-                    if (a.properties.boundary)
-                        return 'Boundary'
-                    if (a.properties.waterway)
-                        return 'Water'
-                    if (a.properties.building)
-                        return 'Building'
+                const p = a.properties;
+                if (p) {
+                    if (p.amenity) return p.amenity;
+                    if (p.highway) return 'Way';
+                    if (p.barrier) return 'Barrier';
+                    if (p.power) return 'Power';
+                    if (p.boundary) return 'Boundary'
+                    if (p.waterway) return 'Water'
+                    if (p.building) return 'Building'
                 }
                 //console.log(a);
                 return 'Other';
             });
             _.forEach(xx, (features, amenity)=>{
-                //const y = _.clone(x);
-                const y = _.cloneDeep(x);
+                const y = _.clone(x);
+                //const y = _.cloneDeep(x);
                 y.features = features;
                 that.load(y, amenity)
             });
@@ -433,7 +471,7 @@
                 }
                 cfg.attributes.drawOutline = false;
                 cfg.attributes.depthTest = true;
-                cfg.attributes.drawVerticals = true;
+                cfg.attributes.drawVerticals = false;
                 cfg.attributes.applyLighting = cfg.attributes.enableLighting = true;
                 const shape = new WorldWind.Polygon(
                     b,
@@ -490,9 +528,16 @@
             const yl = Y.l; yl.removeAllRenderables();
 
             p.load(null, this.shapeConfigurationCallback, yl);
-            _.forEach(ll, yy => yl.addRenderable(yy));
 
-            return Y;
+            if (ll.length + yl.renderables.length === 0) {
+                this.layers.delete(name);
+                this.focus.removeLayer(Y);
+                return null;
+            } else {
+                _.forEach(ll, yy => yl.addRenderable(yy));
+                return Y;
+            }
+
         }
 
         stop(focus) {
@@ -505,6 +550,41 @@
 
         constructor(view) {
             this.view = view;
+
+            this.touched = [];
+
+            // The common pick-handling function.
+            // Listen for mouse moves and highlight the placemarks that the cursor rolls over.
+            // Listen for taps on mobile devices and highlight the placemarks that the user taps.
+            const finger = o => {
+                _.forEach(this.touched, t => t.highlighted = false);
+                var touched = (this.touched = []);
+
+                const px = o.clientX, py = o.clientY;
+
+                // Perform the pick. Must first convert from window coordinates to canvas coordinates, which are
+                // relative to the upper left corner of the canvas rather than the upper left corner of the page.
+                const picked = view.pick(view.canvasCoordinates(px, py));
+
+                //console.log(picked);
+
+                const picks = picked.objects;
+                if (picks.length > 0) {
+                    //console.log(pickList.objects);
+
+                    _.forEach(picks, p => {
+                        const o = p.userObject;
+                        o.highlighted = true;
+                        touched.push(o);
+                    })
+
+                    //view.redraw(); // redraw to make the highlighting changes take effect on the screen
+                }
+
+            };
+
+            var tapRecognizer = new WorldWind.TapRecognizer(view, finger);
+            view.addEventListener("mousemove",finger);
 
             // console.log(view.drawContext);
 
@@ -552,15 +632,14 @@
                 layer.enable(); //default state
 
             layer.start(this);
-
         }
 
         removeLayer(layer) {
             layer.element.remove();
             delete layer.element;
 
-            const removed = this.layers.remove(layer);
-            console.log(layer, ' = ? = ', removed); //TODO
+            this.layers = _.filter(this.layers, x => x!==layer);
+            //console.log(layer, ' = ? = ', removed); //TODO
             layer.stop(this);
         }
 
