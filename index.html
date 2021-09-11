@@ -4,28 +4,29 @@
     <meta charset="utf-8">
     <title>netvr</title>
 
-    <script src="https://www.unpkg.com/jquery@3.6.0/dist/jquery.min.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" type="text/javascript" async></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" type="text/javascript" async></script>
 
-    <script src="https://unpkg.com/worldwindjs@1.8.0/build/dist/worldwind.min.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/worldwindjs@1.8.0/build/dist/worldwind.min.js" type="text/javascript"
+            async></script>
 
     <!--
     OSM Tags
       https://taginfo.openstreetmap.org/download
       https://wiki.openstreetmap.org/wiki/Category:Tag_descriptions
     -->
-    <script src="https://unpkg.com/osmtogeojson@3.0.0-beta.4/osmtogeojson.js" type="text/javascript"></script>
+    <script src="https://unpkg.com/osmtogeojson@3.0.0-beta.4/osmtogeojson.js" type="text/javascript" async></script>
 
     <!-- https://packery.metafizzy.co/ -->
-<!--    <script src="https://unpkg.com/packery@2.1.2/dist/packery.pkgd.min.js" type="text/javascript"></script>-->
+    <!--    <script src="https://unpkg.com/packery@2.1.2/dist/packery.pkgd.min.js" type="text/javascript"></script>-->
 
-<!--    <script src="http://kombai.github.io/freewall/freewall.js" type="text/javascript"></script>-->
-<!--    <link rel="stylesheet" href="http://kombai.github.io/freewall/example/css/style.css"/>-->
+    <!--    <script src="http://kombai.github.io/freewall/freewall.js" type="text/javascript"></script>-->
+    <!--    <link rel="stylesheet" href="http://kombai.github.io/freewall/example/css/style.css"/>-->
 
     <!-- https://forkaweso.me/Fork-Awesome/icons/ -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css" integrity="sha256-XoaMnoYC5TH6/+ihMEnospgm0J1PM/nioxbOUdnM8HY=" crossorigin="anonymous">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css" async
+          integrity="sha256-XoaMnoYC5TH6/+ihMEnospgm0J1PM/nioxbOUdnM8HY=" crossorigin="anonymous">
 
 
     <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.18.2/cytoscape.min.js" type="text/javascript"></script>-->
@@ -41,20 +42,32 @@
             height: 100%;
             position: fixed;
         }
+
         div {
             transition: 0.25s;
             /*opacity: 0.5;*/
         }
+
         /*div:hover {*/
         /*    opacity: 1.0;*/
         /*}*/
 
         .full {
-            position: fixed; width: 100%; height: 100%; margin: 0; padding: 0;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
         }
+
         .side {
-            position: fixed; width: 25%; height: 100%; margin: 0; padding: 0;
+            position: fixed;
+            width: 25%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
         }
+
         #mode_menu {
             color: white;
         }
@@ -63,8 +76,9 @@
         #mode_idiocracy button {
             margin: 1em;
             /*opacity:0.75;*/
-            pointer-events:painted;
+            /*pointer-events:painted;*/
         }
+
         /*#addmenu {*/
         /*    position: fixed;*/
         /*    left:10%;*/
@@ -77,12 +91,15 @@
             height: 100%;
             overflow: auto;
             direction: rtl;
+            opacity: 0.9;
             /*display: flow;*/
         }
 
         .cell {
-            direction: ltr; /* unset? */
-            background-color: rgba(0.7, 0.7, 0.7, 0.75);
+            direction: ltr; /* restore direction */
+            /*background-color: rgba(0.7, 0.7, 0.7, 0.75);*/
+            background-color: black;
+
             color: white;
 
             /*opacity:0.9;*/
@@ -92,11 +109,15 @@
             margin: 0.2em;
 
             /*min-width: 25px;*/
+            border: 4px solid black;
         }
+
         .cell.cell_enabled {
-            background-color: rgba(1, 1, 1, 0.9) !important;
+            /*background-color: rgba(1, 1, 1, 0.9) !important;*/
             padding-top: 0.5em;
             padding-bottom: 0.5em;
+            border-color: yellow;
+
         }
 
         .cell .enabler {
@@ -105,59 +126,62 @@
             height: 1em;
             width: 1em;
         }
+
         .cell .controls {
             font-size: 80%;
         }
+
         .buttonlike {
             cursor: pointer;
         }
+
         .buttonlike:hover {
             color: darkorange;
-            background-color: rgba(1,0.5,1,0.9) !important;
+            background-color: rgba(1, 0.5, 1, 0.9) !important;
         }
+
         .buttonlike:active {
             color: gold;
         }
     </style>
 
-<!--    <script src="https://code.jquery.com/mobile/1.5.0-rc1/jquery.mobile-1.5.0-rc1.min.js" type="text/javascript"></script>-->
-<!--    <link rel="stylesheet" href="https://code.jquery.com/mobile/1.5.0-rc1/jquery.mobile-1.5.0-rc1.min.css">-->
+    <!--    <script src="https://code.jquery.com/mobile/1.5.0-rc1/jquery.mobile-1.5.0-rc1.min.js" type="text/javascript"></script>-->
+    <!--    <link rel="stylesheet" href="https://code.jquery.com/mobile/1.5.0-rc1/jquery.mobile-1.5.0-rc1.min.css">-->
 
 </head>
 <body>
-    <canvas id="map" class="full">
-        HTML5 Canvas Unsupported
-    </canvas>
-    <!-- TODO mode select -->
+<canvas id="map" class="full">
+    HTML5 Canvas Unsupported
+</canvas>
+<!-- TODO mode select -->
 
-    <!-- TODO raw amenity mode -->
+<!-- TODO raw amenity mode -->
 
 
-    <div id="addmenu" style="display:none">
-        <div id="mode_menu">
-            <button title="Clear"><i class="fa fa-times" aria-hidden="true"></i></button>
-            <button title="Amenity"><i class="fa fa-wrench" aria-hidden="true"></i></button>
-            <button title="Idiocracy"><i class="fa fa-trophy" aria-hidden="true"></i></button>
-        </div>
-        <div id="mode_idiocracy">
-            <button>fuck</button>
-            <button>shit</button>
-            <button>play</button>
-            <button>slep</button>
-            <button>eaat</button>
-        </div>
+<div id="addmenu" style="display:none">
+    <div id="mode_menu">
+        <button title="Clear"><i class="fa fa-times" aria-hidden="true"></i></button>
+        <button title="Amenity"><i class="fa fa-wrench" aria-hidden="true"></i></button>
+        <button title="Idiocracy"><i class="fa fa-trophy" aria-hidden="true"></i></button>
     </div>
-
-    <!-- idiocracy mode -->
-    <div id="root" class="side">
-        <div id="menu" style="position: absolute; left:100%; height: 100%">
-            <button id="addmenu_toggle" title="add">+</button>
-            <button id="remembermenu_toggle" title="remember">s</button>
-        </div>
-        <div id="active">
-        </div>
+    <div id="mode_idiocracy">
+        <button>fuck</button>
+        <button>shit</button>
+        <button>play</button>
+        <button>slep</button>
+        <button>eaat</button>
     </div>
+</div>
 
+<!-- idiocracy mode -->
+<div id="root" class="side">
+    <div id="menu" style="position: absolute; left:100%; height: 100%">
+        <button id="addmenu_toggle" title="add">+</button>
+        <button id="remembermenu_toggle" title="remember">s</button>
+    </div>
+    <div id="active">
+    </div>
+</div>
 
 
 <script>
@@ -221,6 +245,7 @@
             super(name);
             this.l = l;
         }
+
         //TODO set opacity ...
 
         opacity(o) {
@@ -233,6 +258,7 @@
             focus.view.addLayer(this.l);
             //focus.view.redraw(); //TODO debounce
         }
+
         stop(focus) {
             super.stop(focus);
             focus.view.removeLayer(this.l);
@@ -264,7 +290,7 @@
 
             enablement(); //initialize
 
-            enabler.click(()=>{
+            enabler.click(() => {
                 if (layer.enabled) this.disable(); else this.enable();
                 enablement();
                 focus.view.redraw();
@@ -282,7 +308,7 @@
                 emotions, display
             );
 
-            const label = $('<div>').addClass('label').addClass('buttonlike').text(this.name).click(()=>{
+            const label = $('<div>').addClass('label').addClass('buttonlike').text(this.name).click(() => {
                 controls.toggle();
             });
 
@@ -290,7 +316,7 @@
         }
     }
 
-    class OSMNodes  {
+    class OSMNodes {
 
         constructor(focus) {
 
@@ -385,11 +411,11 @@
 
             $.ajax({
                 url: 'https://overpass-api.de/api/interpreter?data='
-                      + encodeURIComponent(
-                        '[out:json];\n' + query.replaceAll('<bbox>',bbox) + '\nout geom' + bbox + ';'
-                      ),
-                contentType : 'application/json',
-                dataType : 'json',
+                    + encodeURIComponent(
+                        '[out:json];\n' + query.replaceAll('<bbox>', bbox) + '\nout geom' + bbox + ';'
+                    ),
+                contentType: 'application/json',
+                dataType: 'json',
                 headers: {
                     "Accepts": "text/plain; charset=utf-8",
                     "Cache-Control": 'max-age=3600'//<seconds>
@@ -406,7 +432,6 @@
             const that = this;
             //console.log(X);
             const x = osmtogeojson(X);
-
 
 
             let features = x.features;
@@ -431,7 +456,7 @@
                 //console.log(a);
                 return 'Other';
             });
-            _.forEach(xx, (features, amenity)=>{
+            _.forEach(xx, (features, amenity) => {
                 const y = _.clone(x);
                 //const y = _.cloneDeep(x);
                 y.features = features;
@@ -457,10 +482,49 @@
 
             const altitudeDefault = 10;
 
-            p.addRenderablesForPolygon = function(layer, geometry, properties) {
+            p.addRenderablesForPoint = function (layer, geometry, properties) {
+                var cfg = this.shapeConfigurationCallback(geometry, properties);
 
-                if (!(!this.crs || this.crs.isCRSSupported()))
-                    return;
+                if (!(!this.crs || this.crs.isCRSSupported())) return;
+
+                const coords = geometry.coordinates;
+                var lon = coords[0],
+                    lat = coords[1],
+                    alt = coords[2] ? coords[2] : 0;
+                alt += 20;
+                // var reprojectedCoordinate = this.getReprojectedIfRequired(lat, lon, this.crs);
+                // lat = reprojectedCoordinate[1];
+                // lon = reprojectedCoordinate[0];
+                const w = 0.0001;
+                var meshPositions = [];
+                for (var lt = lat - w / 2; lt <= lat + w / 2; lt += w) {
+                    var row = [];
+                    for (var ln = lon - w / 2; ln <= lon + w / 2; ln += w)
+                        row.push(new WorldWind.Position(lt, ln, alt));
+                    meshPositions.push(row);
+                }
+                //console.log(meshPositions);
+                var icon = new WorldWind.GeographicMesh(meshPositions, cfg);
+                var meshAttributes = new WorldWind.ShapeAttributes(null);
+                meshAttributes.outlineColor = WorldWind.Color.BLACK;
+                meshAttributes.interiorColor = new WorldWind.Color(1, 1, 1, 0.75);
+                meshAttributes.applyLighting = true;
+                icon.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
+                icon.attributes = meshAttributes;
+                if (cfg && cfg.name) icon.label = cfg.name;
+                if (cfg && cfg.eyeDistanceScaling) icon.eyeDistanceScaling = cfg.eyeDistanceScaling;
+                if (cfg && cfg.eyeDistanceScalingThreshold) icon.eyeDistanceScalingThreshold = cfg.eyeDistanceScalingThreshold;
+                if (cfg && cfg.imageRotation) icon.imageRotation = cfg.imageRotation;
+                if (cfg && cfg.imageRotationReference) icon.imageRotationReference = cfg.imageRotationReference;
+                if (cfg && cfg.highlightAttributes) icon.highlightAttributes = cfg.highlightAttributes;
+                if (cfg && cfg.pickDelegate) icon.pickDelegate = cfg.pickDelegate;
+                if (cfg && cfg.userProperties) icon.userProperties = cfg.userProperties;
+                ll.push(icon);
+            };
+
+            p.addRenderablesForPolygon = function (layer, geometry, properties) {
+
+                if (!(!this.crs || this.crs.isCRSSupported())) return;
 
                 const cfg = this.shapeConfigurationCallback(geometry, properties);
 
@@ -493,12 +557,9 @@
                     cfg && cfg.attributes ? cfg.attributes : null);
                 shape.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
                 shape.extrude = true;
-                if (cfg && cfg.highlightAttributes)
-                    shape.highlightAttributes = cfg.highlightAttributes;
-                if (cfg && cfg.pickDelegate)
-                    shape.pickDelegate = cfg.pickDelegate;
-                if (cfg && cfg.userProperties)
-                    shape.userProperties = cfg.userProperties;
+                if (cfg && cfg.highlightAttributes) shape.highlightAttributes = cfg.highlightAttributes;
+                if (cfg && cfg.pickDelegate) shape.pickDelegate = cfg.pickDelegate;
+                if (cfg && cfg.userProperties) shape.userProperties = cfg.userProperties;
                 ll.push(shape);
             };
             p.addRenderablesForLineString = function (layer, geometry, properties) {
@@ -522,17 +583,23 @@
                     positions.push(new WorldWind.Position(reprojectedCoordinate[1], reprojectedCoordinate[0], altitude));
                 }
                 cfg.attributes.depthTest = true;
-                cfg.attributes.interiorColor = new WorldWind.Color(1, 0.5, 0, 0.5);
+                cfg.attributes.interiorColor = new WorldWind.Color(1, 0.5, 0, 0.9);
                 cfg.attributes.drawInterior = true;
-                cfg.attributes.drawOutline = false;
+
+                cfg.attributes.outlineColor =
+                    undefined;
+                //new WorldWind.Color(0.5, 1, 0, 0.9);
+                cfg.attributes.drawOutline = cfg.attributes.outlineColor ? true : false;
+                //cfg.attributes.outlineWidth = 10;
+
                 const path =
                     new WorldWind.Path(
                         //new WorldWind.SurfacePolyline(
                         positions, cfg.attributes);
                 path.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
-                path.followTerrain = true;
+                //path.followTerrain = true;
                 path.extrude = true;
-                path._numSubSegments = 3;
+                path._numSubSegments = 2;
                 if (cfg && cfg.highlightAttributes) path.highlightAttributes = cfg.highlightAttributes;
                 if (cfg && cfg.pickDelegate) path.pickDelegate = cfg.pickDelegate;
                 if (cfg && cfg.userProperties) path.userProperties = cfg.userProperties;
@@ -540,7 +607,8 @@
             };
 
             const Y = this.layer(name);
-            const yl = Y.l; yl.removeAllRenderables();
+            const yl = Y.l;
+            yl.removeAllRenderables();
 
             p.load(null, this.shapeConfigurationCallback, yl);
 
@@ -572,26 +640,22 @@
             // Listen for mouse moves and highlight the placemarks that the cursor rolls over.
             // Listen for taps on mobile devices and highlight the placemarks that the user taps.
             var finger = o => {
+                if (o.buttons === 0 && o.button === 0)
+                    return;
+
                 _.forEach(this.touched, t => t.highlighted = false);
-                var touched = (this.touched = []);
-
-                const px = o.clientX, py = o.clientY;
-
-                // Perform the pick. Must first convert from window coordinates to canvas coordinates, which are
-                // relative to the upper left corner of the canvas rather than the upper left corner of the page.
+                const touched = this.touched = [];
                 var picked;
                 try {
+                    const px = o.clientX, py = o.clientY;
                     picked = view.pick(view.canvasCoordinates(px, py));
                 } catch (e) {
                     console.log(e);
                     return;
                 }
-
-                //console.log(picked);
-
                 const picks = picked.objects;
                 if (picks.length > 0) {
-                    //console.log(pickList.objects);
+                    console.log(o, picks);
 
                     _.forEach(picks, p => {
                         const o = p.userObject;
@@ -605,8 +669,9 @@
             };
             finger = _.debounce(finger, 50);
 
-            var tapRecognizer = new WorldWind.TapRecognizer(view, finger);
-            view.addEventListener("mousemove",finger);
+            //var tapRecognizer = new WorldWind.TapRecognizer(view, finger);
+            view.addEventListener("mousemove", finger);
+            view.addEventListener("mousedown", finger);
 
             // console.log(view.drawContext);
 
@@ -626,8 +691,8 @@
         }
 
         run() {
-            _.forEach(this.layers, (x)=>{
-               x.update(this);
+            _.forEach(this.layers, (x) => {
+                x.update(this);
             });
         }
 
@@ -650,7 +715,7 @@
         addLayer(layer) {
             this.layers.push(layer);
 
-            if (layer.enabled===undefined)
+            if (layer.enabled === undefined)
                 layer.enable(); //default state
 
             layer.start(this);
@@ -660,7 +725,7 @@
             layer.element.remove();
             delete layer.element;
 
-            this.layers = _.filter(this.layers, x => x!==layer);
+            this.layers = _.filter(this.layers, x => x !== layer);
             //console.log(layer, ' = ? = ', removed); //TODO
             layer.stop(this);
         }
@@ -676,10 +741,13 @@
         WorldWind.Logger.setLoggingLevel(WorldWind.Logger.LEVEL_WARNING);
 
 
-
         const w = new WorldWind.WorldWindow("map");
-        //w.deepPicking = true;
         //console.log(w);
+        //w.deepPicking = true;
+        w.camera.fieldOfView =
+            60;
+        //45;
+        //10;
 
         const f = new Focus(w);
         //TODO w.clearLayers()
@@ -690,7 +758,7 @@
 
         var pos = f.position(
             //40.7638, -73.98584, 1000
-            46.232321,6.0505552, 1000
+            46.232321, 6.0505552, 1000
         );  //central park
 
         const countriesLayer = new WorldWind.RenderableLayer("Countries");
@@ -716,7 +784,7 @@
                 }
 
                 return cfg;
-        }, countriesLayer);
+            }, countriesLayer);
         f.addLayer(new WWLayer("Countries", countriesLayer).disable());
 
         // const cityLayer = new WorldWind.RenderableLayer("Cities");
@@ -737,7 +805,7 @@
             //'(way[highway]<bbox>; relation<bbox>; node<bbox>;);'
             , pos.latitude, pos.longitude, 0.007)
 
-        $("#addmenu_toggle").click(()=>{
+        $("#addmenu_toggle").click(() => {
             $("#addmenu").toggle(/*"slow"*/);
         });
 
