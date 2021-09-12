@@ -28,6 +28,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css" async
           integrity="sha256-XoaMnoYC5TH6/+ihMEnospgm0J1PM/nioxbOUdnM8HY=" crossorigin="anonymous">
 
+    <script src ="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js" async></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css"/>
 
     <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.18.2/cytoscape.min.js" type="text/javascript"></script>-->
 
@@ -480,10 +482,11 @@
             const ll = [];
             const p = new WorldWind.GeoJSONParser(x);
 
-            const altitudeDefault = 10;
+            const altitudeDefault = 2, altitudeRoad = 1;
 
             p.addRenderablesForPoint = function (layer, geometry, properties) {
                 var cfg = this.shapeConfigurationCallback(geometry, properties);
+
 
                 if (!(!this.crs || this.crs.isCRSSupported())) return;
 
@@ -505,12 +508,13 @@
                 }
                 //console.log(meshPositions);
                 var icon = new WorldWind.GeographicMesh(meshPositions, cfg);
-                var meshAttributes = new WorldWind.ShapeAttributes(null);
-                meshAttributes.outlineColor = WorldWind.Color.BLACK;
-                meshAttributes.interiorColor = new WorldWind.Color(1, 1, 1, 0.75);
-                meshAttributes.applyLighting = true;
+                var attr = new WorldWind.ShapeAttributes(null);
+                attr.concept = properties;
+                attr.outlineColor = WorldWind.Color.BLACK;
+                attr.interiorColor = new WorldWind.Color(1, 1, 1, 0.75);
+                attr.applyLighting = true;
                 icon.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
-                icon.attributes = meshAttributes;
+                icon.attributes = attr;
                 if (cfg && cfg.name) icon.label = cfg.name;
                 if (cfg && cfg.eyeDistanceScaling) icon.eyeDistanceScaling = cfg.eyeDistanceScaling;
                 if (cfg && cfg.eyeDistanceScalingThreshold) icon.eyeDistanceScalingThreshold = cfg.eyeDistanceScalingThreshold;
@@ -548,6 +552,7 @@
                     }
                     b.push(positions);
                 }
+                cfg.attributes.concept = properties;
                 cfg.attributes.drawOutline = false;
                 cfg.attributes.depthTest = true;
                 cfg.attributes.drawVerticals = false;
@@ -557,6 +562,9 @@
                     cfg && cfg.attributes ? cfg.attributes : null);
                 shape.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
                 shape.extrude = true;
+                if (properties.name)
+                    shape.displayName = properties.name;
+
                 if (cfg && cfg.highlightAttributes) shape.highlightAttributes = cfg.highlightAttributes;
                 if (cfg && cfg.pickDelegate) shape.pickDelegate = cfg.pickDelegate;
                 if (cfg && cfg.userProperties) shape.userProperties = cfg.userProperties;
@@ -575,22 +583,24 @@
                     const pp = points[pointsIndex];
                     const longitude = pp[0],
                         latitude = pp[1],
-                        altitude = pp[2] ? pp[2] : altitudeDefault / 2;
+                        altitude = pp[2] ? pp[2] : altitudeRoad;
                     const reprojectedCoordinate = this.getReprojectedIfRequired(
                         latitude,
                         longitude,
                         this.crs);
                     positions.push(new WorldWind.Position(reprojectedCoordinate[1], reprojectedCoordinate[0], altitude));
                 }
+                cfg.attributes.concept = properties;
                 cfg.attributes.depthTest = true;
-                cfg.attributes.interiorColor = new WorldWind.Color(1, 0.5, 0, 0.9);
-                cfg.attributes.drawInterior = true;
+                //cfg.attributes.applyLighting = cfg.attributes.enableLighting = true;
+                //cfg.attributes.interiorColor = new WorldWind.Color(1, 0.5, 0, 0.9);
+                cfg.attributes.drawInterior = false;
 
                 cfg.attributes.outlineColor =
-                    undefined;
-                //new WorldWind.Color(0.5, 1, 0, 0.9);
+                    //undefined;
+                    new WorldWind.Color(1, 0.5, 0, 0.9);
                 cfg.attributes.drawOutline = cfg.attributes.outlineColor ? true : false;
-                //cfg.attributes.outlineWidth = 10;
+                cfg.attributes.outlineWidth = 100;
 
                 const path =
                     new WorldWind.Path(
@@ -598,8 +608,8 @@
                         positions, cfg.attributes);
                 path.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
                 //path.followTerrain = true;
-                path.extrude = true;
-                path._numSubSegments = 2;
+                //path.extrude = true;
+                //path._numSubSegments = 3;
                 if (cfg && cfg.highlightAttributes) path.highlightAttributes = cfg.highlightAttributes;
                 if (cfg && cfg.pickDelegate) path.pickDelegate = cfg.pickDelegate;
                 if (cfg && cfg.userProperties) path.userProperties = cfg.userProperties;
@@ -653,9 +663,22 @@
                     console.log(e);
                     return;
                 }
-                const picks = picked.objects;
+
+                var picks = picked.objects;
+                //console.log(picks);
+
                 if (picks.length > 0) {
-                    console.log(o, picks);
+                    _.forEach(picks, x => {
+                        if (x.isTerrain) {
+                            //toastr.info("terrain " + x.position);
+                        } else {
+                            // const concept = x.userObject.userProperties.concept || x.userObject.displayName;
+                            // toastr.info(JSON.stringify(concept), {
+                            //     closeButton: true
+                            // });
+                        }
+                    })
+
 
                     _.forEach(picks, p => {
                         const o = p.userObject;
@@ -667,7 +690,7 @@
                 }
 
             };
-            finger = _.debounce(finger, 50);
+            finger = _.throttle(finger, 50);
 
             //var tapRecognizer = new WorldWind.TapRecognizer(view, finger);
             view.addEventListener("mousemove", finger);
