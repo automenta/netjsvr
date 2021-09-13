@@ -25,11 +25,14 @@
     <!--    <link rel="stylesheet" href="http://kombai.github.io/freewall/example/css/style.css"/>-->
 
     <!-- https://forkaweso.me/Fork-Awesome/icons/ -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css" async
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css"
           integrity="sha256-XoaMnoYC5TH6/+ihMEnospgm0J1PM/nioxbOUdnM8HY=" crossorigin="anonymous">
 
     <script src ="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js" async></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css"/>
+
+
+    <script async src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.7/build/dat.gui.min.js" type="text/javascript"></script>
 
     <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.18.2/cytoscape.min.js" type="text/javascript"></script>-->
 
@@ -54,20 +57,34 @@
         /*    opacity: 1.0;*/
         /*}*/
 
-        .full {
+        body:not(.sideExpanded) .content {
             position: fixed;
             width: 100%;
             height: 100%;
             margin: 0;
             padding: 0;
         }
+        body.sideExpanded .content {
+            position: fixed;
+            right: 0;
+            width: 75%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
 
-        .side {
+        body.sideExpanded .side {
             position: fixed;
             width: 25%;
             height: 100%;
             margin: 0;
             padding: 0;
+        }
+        body:not(.sideExpanded) .side {
+            width: 0;
+        }
+        body:not(.sideExpanded) .side #active {
+            display:none;
         }
 
         #mode_menu {
@@ -122,37 +139,60 @@
 
         }
 
-        .cell .enabler {
+        .cell .label {
             float: left;
             clear: both;
-            height: 1em;
-            width: 1em;
         }
 
         .cell .controls {
-            font-size: 80%;
+            font-size: 90%;
+            padding: 1em;
         }
 
         .buttonlike {
             cursor: pointer;
+            color: white;
+            background-color: black;
+            min-height: 1em;
+            min-width: 1em;
+            vertical-align: central;
         }
 
         .buttonlike:hover {
             color: darkorange;
-            background-color: rgba(1, 0.5, 1, 0.9) !important;
         }
 
         .buttonlike:active {
             color: gold;
         }
+
+        #menu {
+            position: absolute;
+            left: 100%;
+            height: 100%;
+        }
+        body:not(.sideExpanded) * #menu {
+            left: auto !important;
+        }
+
+        /* dat.gui overrides */
+        .close-button { display: none !important; }
+        .dg {
+            /*font: 11px 'Lucida Grande', sans-serif; */
+            font: inherit !important;
+            text-shadow: none !important;
+        }
+
+
     </style>
 
     <!--    <script src="https://code.jquery.com/mobile/1.5.0-rc1/jquery.mobile-1.5.0-rc1.min.js" type="text/javascript"></script>-->
     <!--    <link rel="stylesheet" href="https://code.jquery.com/mobile/1.5.0-rc1/jquery.mobile-1.5.0-rc1.min.css">-->
 
 </head>
-<body>
-<canvas id="map" class="full">
+<body class="sideExpanded">
+
+<canvas id="map" class="content">
     HTML5 Canvas Unsupported
 </canvas>
 <!-- TODO mode select -->
@@ -177,9 +217,10 @@
 
 <!-- idiocracy mode -->
 <div id="root" class="side">
-    <div id="menu" style="position: absolute; left:100%; height: 100%">
-        <button id="addmenu_toggle" title="add">+</button>
-        <button id="remembermenu_toggle" title="remember">s</button>
+    <div id="menu">
+        <div id="side_toggle" title="add" class="buttonlike">X</div>
+        <div id="addmenu_toggle" title="add" class="buttonlike">+</div>
+        <div id="remembermenu_toggle" title="remember" class="buttonlike">s</div>
     </div>
     <div id="active">
     </div>
@@ -282,39 +323,70 @@
         icon(focus) {
             const layer = this.l;
 
-            const toggleLabel = () => layer.enabled ? "+" : "-";
+            const toggleLabel = () => (layer.enabled ? "+" : "-") + this.name;
 
-            const enabler = $('<div>').addClass('enabler').addClass('buttonlike').text(toggleLabel());
+            const label = $('<div>')
+                .addClass('label')
+                .addClass('buttonlike')
+                .attr('style', 'text-align: left;')
+                .text(toggleLabel());
 
             const enablement = () => {
-                enabler.text(toggleLabel());
+                label.text(toggleLabel());
             };
 
             enablement(); //initialize
 
-            enabler.click(() => {
+            label.click(() => {
                 if (layer.enabled) this.disable(); else this.enable();
                 enablement();
                 focus.view.redraw();
             });
 
-            const emotions = $('<div>').append(
-                '+- = 0'
-            );
 
-            const display = $('<div>').append(
-                'opacity = 100%'
-            );
+            //https://github.com/dataarts/dat.gui/blob/master/API.md
+            var gui = new dat.GUI({
+                name: 'xyz', autoPlace: false, hideable: false,
+                width: 'auto'
+            });
+
+            var person = {name: 'wtf', age: 45, alive: false};
+            gui.add(person, 'name'); // string control
+
+            gui.add(person, 'age', 0, 100); // Add a number controller slider.
+
+            gui.add(person, 'alive');
+
+            var folder1 = gui.addFolder('Flow Field');
+            var palette = {
+                color1: '#FF0000', // CSS string
+                color2: [ 0, 128, 255 ], // RGB array
+                color3: [ 0, 128, 255, 0.3 ], // RGB with alpha
+                color4: { h: 350, s: 0.9, v: 0.3 } // Hue, saturation, value
+            };
+            gui.addColor(palette, 'color1');
+            gui.addColor(palette, 'color2');
+            gui.addColor(palette, 'color3');
+            gui.addColor(palette, 'color4');
+
+            // const emotions = $('<div>').append(
+            //     '+- = 0'
+            // );
+            //
+            // const display = $('<div>').append(
+            //     'opacity = 100%'
+            // );
 
             const controls = $('<div>').addClass('controls').hide().append(
-                emotions, display
+                gui.domElement
             );
 
-            const label = $('<div>').addClass('label').addClass('buttonlike').text(this.name).click(() => {
+            const expander = $('<div>').addClass('buttonlike')
+                .text('⇅').attr('style', 'text-align: right').click(() => {
                 controls.toggle();
             });
 
-            return $('<div>').append(enabler, label, controls);
+            return $('<div>').append(label, expander, controls);
         }
     }
 
@@ -323,16 +395,15 @@
         constructor(focus) {
 
             this.focus = focus;
-            const layers = new Map();
-            this.layers = layers;
+            this.layers = new Map();
 
-            const attr = new WorldWind.PlacemarkAttributes(null);
-            attr.imageSource = WorldWind.configuration.baseUrl + "images/white-dot.png";
-            attr.imageScale = 0.25;
-            attr.imageColor = WorldWind.Color.WHITE;
-            attr.labelAttributes.offset = new WorldWind.Offset(
-                WorldWind.OFFSET_FRACTION, 0.5,
-                WorldWind.OFFSET_FRACTION, 1.5);
+            // const attr = new WorldWind.PlacemarkAttributes(null);
+            // attr.imageSource = WorldWind.configuration.baseUrl + "images/white-dot.png";
+            // attr.imageScale = 0.25;
+            // attr.imageColor = WorldWind.Color.WHITE;
+            // attr.labelAttributes.offset = new WorldWind.Offset(
+            //     WorldWind.OFFSET_FRACTION, 0.5,
+            //     WorldWind.OFFSET_FRACTION, 1.5);
 
             this.shapeConfigurationCallback = (geometry, properties) => {
                 const cfg = {};
@@ -468,7 +539,7 @@
         }
 
         layer(x) {
-            var y = this.layers.get(x);
+            let y = this.layers.get(x);
             if (!y) {
                 y = new WWLayer(x, new WorldWind.RenderableLayer()).disable();
                 this.layers.set(x, y);
@@ -485,30 +556,30 @@
             const altitudeDefault = 2, altitudeRoad = 1;
 
             p.addRenderablesForPoint = function (layer, geometry, properties) {
-                var cfg = this.shapeConfigurationCallback(geometry, properties);
+                const cfg = this.shapeConfigurationCallback(geometry, properties);
 
 
                 if (!(!this.crs || this.crs.isCRSSupported())) return;
 
                 const coords = geometry.coordinates;
-                var lon = coords[0],
-                    lat = coords[1],
-                    alt = coords[2] ? coords[2] : 0;
-                alt += 20;
+                const lon = coords[0],
+                    lat = coords[1];
+                let alt = coords[2] ? coords[2] : 0;
+                alt += 5;
                 // var reprojectedCoordinate = this.getReprojectedIfRequired(lat, lon, this.crs);
                 // lat = reprojectedCoordinate[1];
                 // lon = reprojectedCoordinate[0];
                 const w = 0.0001;
-                var meshPositions = [];
-                for (var lt = lat - w / 2; lt <= lat + w / 2; lt += w) {
-                    var row = [];
-                    for (var ln = lon - w / 2; ln <= lon + w / 2; ln += w)
+                const meshPositions = [];
+                for (let lt = lat - w / 2; lt <= lat + w / 2; lt += w) {
+                    const row = [];
+                    for (let ln = lon - w / 2; ln <= lon + w / 2; ln += w)
                         row.push(new WorldWind.Position(lt, ln, alt));
                     meshPositions.push(row);
                 }
                 //console.log(meshPositions);
-                var icon = new WorldWind.GeographicMesh(meshPositions, cfg);
-                var attr = new WorldWind.ShapeAttributes(null);
+                const icon = new WorldWind.GeographicMesh(meshPositions, cfg);
+                let attr = new WorldWind.ShapeAttributes(null);
                 attr.concept = properties;
                 attr.outlineColor = WorldWind.Color.BLACK;
                 attr.interiorColor = new WorldWind.Color(1, 1, 1, 0.75);
@@ -599,7 +670,7 @@
                 cfg.attributes.outlineColor =
                     //undefined;
                     new WorldWind.Color(1, 0.5, 0, 1);
-                cfg.attributes.drawOutline = cfg.attributes.outlineColor ? true : false;
+                cfg.attributes.drawOutline = !!cfg.attributes.outlineColor;
                 cfg.attributes.outlineWidth = 10;
 
                 const path =
@@ -644,21 +715,22 @@
         constructor(view) {
             this.view = view;
 
-            this.touched = [];
 
-            var anim = null;
+
+            let anim = null;
 
 
             // The common pick-handling function.
             // Listen for mouse moves and highlight the placemarks that the cursor rolls over.
             // Listen for taps on mobile devices and highlight the placemarks that the user taps.
-            var finger = o => {
+            let finger = o => {
+                //console.log(o);
                 if (o.buttons !== 1)
                     return;
 
-                _.forEach(this.touched, t => t.highlighted = false);
+                //_.forEach(this.touched, t => t.highlighted = false);
                 const touched = this.touched = [];
-                var picked;
+                let picked;
                 try {
                     const px = o.clientX, py = o.clientY;
                     picked = view.pick(view.canvasCoordinates(px, py));
@@ -667,7 +739,7 @@
                     return;
                 }
 
-                var picks = picked.objects;
+                const picks = picked.objects;
                 //console.log(picks);
 
                 if (picks.length > 0) {
@@ -676,15 +748,13 @@
                             //toastr.info("terrain " + x.position);
                         } else {
                             if (anim===null) {
-                                var tgt = new WorldWind.Position().copy(x.userObject.referencePosition);
-                                //tgt.altitude += view.camera.altitude;
+
+                                const tgt = new WorldWind.Position().copy(x.userObject.referencePosition);
                                 tgt.altitude += 100;
+
                                 anim = new WorldWind.GoToAnimator(view);
                                 anim.travelTime = 1000;
-                                anim.goTo(tgt, () => {
-                                    //done
-                                    anim = null;
-                                });
+                                anim.goTo(tgt, () => {anim = null;});
                             }
 
                             // const concept = x.userObject.userProperties.concept || x.userObject.displayName;
@@ -695,11 +765,11 @@
                     })
 
 
-                    _.forEach(picks, p => {
-                        const o = p.userObject;
-                        o.highlighted = true;
-                        touched.push(o);
-                    })
+                    // _.forEach(picks, p => {
+                    //     const o = p.userObject;
+                    //     o.highlighted = true;
+                    //     touched.push(o);
+                    // })
 
                     //view.redraw(); // redraw to make the highlighting changes take effect on the screen
                 }
@@ -794,7 +864,7 @@
         //view.addLayer(new WorldWind.CompassLayer());
         //view.addLayer(new WorldWind.CoordinatesDisplayLayer(wwd));
 
-        var pos = f.position(
+        let pos = f.position(
             //40.7638, -73.98584, 1000
             46.232321, 6.0505552, 1000
         );  //central park
@@ -843,6 +913,14 @@
             //'(way[highway]<bbox>; relation<bbox>; node<bbox>;);'
             , pos.latitude, pos.longitude, 0.007)
 
+        $("#side_toggle").click(() => {
+            const body = document.body;//$('body');
+            if (body.classList.contains('sideExpanded')) {
+                body.classList.remove('sideExpanded');
+            } else {
+                body.classList.add('sideExpanded');
+            }
+        });
         $("#addmenu_toggle").click(() => {
             $("#addmenu").toggle(/*"slow"*/);
         });
