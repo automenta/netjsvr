@@ -21,14 +21,14 @@
     <!-- https://packery.metafizzy.co/ -->
     <!--    <script src="https://unpkg.com/packery@2.1.2/dist/packery.pkgd.min.js" type="text/javascript"></script>-->
 
-    <!--    <script src="http://kombai.github.io/freewall/freewall.js" type="text/javascript"></script>-->
-    <!--    <link rel="stylesheet" href="http://kombai.github.io/freewall/example/css/style.css"/>-->
+    <!--    <script src="https://kombai.github.io/freewall/freewall.js" type="text/javascript"></script>-->
+    <!--    <link rel="stylesheet" href="https://kombai.github.io/freewall/example/css/style.css"/>-->
 
     <!-- https://forkaweso.me/Fork-Awesome/icons/ -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css"
           integrity="sha256-XoaMnoYC5TH6/+ihMEnospgm0J1PM/nioxbOUdnM8HY=" crossorigin="anonymous">
 
-    <script src ="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js" async></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js" async></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css"/>
 
 
@@ -64,6 +64,7 @@
             margin: 0;
             padding: 0;
         }
+
         body.sideExpanded .content {
             position: fixed;
             right: 0;
@@ -80,11 +81,13 @@
             margin: 0;
             padding: 0;
         }
+
         body:not(.sideExpanded) .side {
             width: 0;
         }
+
         body:not(.sideExpanded) .side #active {
-            display:none;
+            display: none;
         }
 
         #mode_menu {
@@ -171,12 +174,16 @@
             left: 100%;
             height: 100%;
         }
+
         body:not(.sideExpanded) * #menu {
             left: auto !important;
         }
 
         /* dat.gui overrides */
-        .close-button { display: none !important; }
+        .close-button {
+            display: none !important;
+        }
+
         .dg {
             /*font: 11px 'Lucida Grande', sans-serif; */
             font: inherit !important;
@@ -282,6 +289,55 @@
         }
     }
 
+    class HomeLayer extends Layer {
+        constructor() {
+            super('Home');
+            this.label = $('<div>');
+        }
+
+        load() {
+            try {
+                this.pos = JSON.parse(localStorage.home);
+                this.label.text(JSON.stringify(this.pos));
+            } catch (e) {
+                this.pos = undefined;
+                delete localStorage.home; //corrupt?
+            }
+        }
+
+        save() {
+            localStorage.home = JSON.stringify(this.pos);
+            this.load();
+        }
+
+        icon(focus) {
+            if (!this.pos) {
+                this.load();
+                this.go(focus);
+            }
+
+            const d = $('<div>');
+            d.append('<i class="buttonlike fa fa-home" style="font-size: 200%; float: left;"/>');
+            d.append(this.label);
+            d.append($('<div>').text('Go').addClass('buttonlike').click(()=>{
+                this.go(focus);
+            }));
+            d.append($('<div>').text('Set').addClass('buttonlike').click(()=>{
+                this.pos = _.clone(focus.view.camera.position);
+                this.save();
+            }));
+            //load(focus.home);
+            return d;
+        }
+
+        go(focus) {
+            if (this.pos) {
+                focus.position(this.pos.latitude, this.pos.longitude, this.pos.altitude);
+                focus.view.redraw();
+            }
+        }
+    }
+
     class WWLayer extends Layer {
 
         constructor(name, l) {
@@ -345,24 +401,24 @@
 
 
             //https://github.com/dataarts/dat.gui/blob/master/API.md
-            var gui = new dat.GUI({
+            const gui = new dat.GUI({
                 name: 'xyz', autoPlace: false, hideable: false,
                 width: 'auto'
             });
 
-            var person = {name: 'wtf', age: 45, alive: false};
+            const person = {name: 'wtf', age: 45, alive: false};
             gui.add(person, 'name'); // string control
 
             gui.add(person, 'age', 0, 100); // Add a number controller slider.
 
             gui.add(person, 'alive');
 
-            var folder1 = gui.addFolder('Flow Field');
-            var palette = {
+            const folder1 = gui.addFolder('Flow Field');
+            const palette = {
                 color1: '#FF0000', // CSS string
-                color2: [ 0, 128, 255 ], // RGB array
-                color3: [ 0, 128, 255, 0.3 ], // RGB with alpha
-                color4: { h: 350, s: 0.9, v: 0.3 } // Hue, saturation, value
+                color2: [0, 128, 255], // RGB array
+                color3: [0, 128, 255, 0.3], // RGB with alpha
+                color4: {h: 350, s: 0.9, v: 0.3} // Hue, saturation, value
             };
             gui.addColor(palette, 'color1');
             gui.addColor(palette, 'color2');
@@ -383,8 +439,8 @@
 
             const expander = $('<div>').addClass('buttonlike')
                 .text('⇅').attr('style', 'text-align: right').click(() => {
-                controls.toggle();
-            });
+                    controls.toggle();
+                });
 
             return $('<div>').append(label, expander, controls);
         }
@@ -436,8 +492,8 @@
                 } else if (geometry.isLineStringType() || geometry.isMultiLineStringType()) {
                     cfg.attributes = new WorldWind.ShapeAttributes(null);
                     cfg.attributes.depthTest = false;
-                    cfg.attributes.drawInterior = true;
-                    cfg.attributes.drawOutline = false;
+                    cfg.attributes.drawInterior = false;
+                    cfg.attributes.drawOutline = true;
                     // cfg.attributes.outlineWidth = 2;
                     // cfg.attributes.outlineColor = new WorldWind.Color(
                     //     0.375 + 0.5 * Math.random(),
@@ -610,15 +666,8 @@
                     const points = boundaries[boundariesIndex];
                     for (let positionIndex = 0; positionIndex < points.length; positionIndex++) {
                         const pp = points[positionIndex];
-                        const
-                            lon = pp[0],
-                            lat = pp[1],
-                            alt = pp[2] ? pp[2] : altitudeDefault;
-
-                        const reprojectedCoordinate = this.getReprojectedIfRequired(
-                            lat,
-                            lon,
-                            this.crs);
+                        const lon = pp[0], lat = pp[1], alt = pp[2] ? pp[2] : altitudeDefault;
+                        const reprojectedCoordinate = this.getReprojectedIfRequired(lat, lon, this.crs);
                         positions.push(new WorldWind.Position(reprojectedCoordinate[1], reprojectedCoordinate[0], alt));
                     }
                     b.push(positions);
@@ -652,13 +701,8 @@
                 const points = geometry.coordinates;
                 for (let pointsIndex = 0; pointsIndex < points.length; pointsIndex++) {
                     const pp = points[pointsIndex];
-                    const longitude = pp[0],
-                        latitude = pp[1],
-                        altitude = pp[2] ? pp[2] : altitudeRoad;
-                    const reprojectedCoordinate = this.getReprojectedIfRequired(
-                        latitude,
-                        longitude,
-                        this.crs);
+                    const lon = pp[0], lat = pp[1], altitude = pp[2] ? pp[2] : altitudeRoad;
+                    const reprojectedCoordinate = this.getReprojectedIfRequired(lat, lon, this.crs);
                     positions.push(new WorldWind.Position(reprojectedCoordinate[1], reprojectedCoordinate[0], altitude));
                 }
                 cfg.attributes.concept = properties;
@@ -715,10 +759,7 @@
         constructor(view) {
             this.view = view;
 
-
-
             let anim = null;
-
 
             // The common pick-handling function.
             // Listen for mouse moves and highlight the placemarks that the cursor rolls over.
@@ -729,7 +770,7 @@
                     return;
 
                 //_.forEach(this.touched, t => t.highlighted = false);
-                const touched = this.touched = [];
+                //const touched = this.touched = [];
                 let picked;
                 try {
                     const px = o.clientX, py = o.clientY;
@@ -743,36 +784,36 @@
                 //console.log(picks);
 
                 if (picks.length > 0) {
-                    _.forEach(picks, x => {
-                        if (x.isTerrain) {
-                            //toastr.info("terrain " + x.position);
-                        } else {
-                            if (anim===null) {
+                    const x = picks[picks.length - 1];
+                    //_.forEach(picks, x => {
+                    if (x.isTerrain) {
+                        //toastr.info("terrain " + x.position);
+                    } else {
+                        if (anim === null) {
 
-                                const tgt = new WorldWind.Position().copy(x.userObject.referencePosition);
-                                tgt.altitude += 100;
+                            const tgt = new WorldWind.Position().copy(x.userObject.referencePosition);
+                            tgt.altitude += 100;
 
-                                anim = new WorldWind.GoToAnimator(view);
-                                anim.travelTime = 1000;
-                                anim.goTo(tgt, () => {anim = null;});
-                            }
-
-                            // const concept = x.userObject.userProperties.concept || x.userObject.displayName;
-                            // toastr.info(JSON.stringify(concept), {
-                            //     closeButton: true
-                            // });
+                            anim = new WorldWind.GoToAnimator(view);
+                            anim.travelTime = 1000;
+                            anim.goTo(tgt, () => {
+                                anim = null;
+                            });
                         }
-                    })
 
-
-                    // _.forEach(picks, p => {
-                    //     const o = p.userObject;
-                    //     o.highlighted = true;
-                    //     touched.push(o);
-                    // })
-
-                    //view.redraw(); // redraw to make the highlighting changes take effect on the screen
+                        // const concept = x.userObject.userProperties.concept || x.userObject.displayName;
+                        // toastr.info(JSON.stringify(concept), {
+                        //     closeButton: true
+                        // });
+                    }
                 }
+                // _.forEach(picks, p => {
+                //     const o = p.userObject;
+                //     o.highlighted = true;
+                //     touched.push(o);
+                // })
+                //view.redraw(); // redraw to make the highlighting changes take effect on the screen
+
 
             };
             finger = _.throttle(finger, 100);
@@ -799,7 +840,7 @@
         }
 
         run() {
-            _.forEach(this.layers, (x) => {
+            _.forEach(this.layers, x => {
                 x.update(this);
             });
         }
@@ -838,7 +879,6 @@
             layer.stop(this);
         }
 
-
     }
 
 
@@ -859,40 +899,43 @@
 
         const f = new Focus(w);
         //TODO w.clearLayers()
+        f.addLayer(new HomeLayer());
         f.addLayer(new WWLayer("Atmosphere", new WorldWind.AtmosphereLayer()).disable());
         f.addLayer(new WWLayer("View Controls", new WorldWind.ViewControlsLayer(w)).disable());
         //view.addLayer(new WorldWind.CompassLayer());
         //view.addLayer(new WorldWind.CoordinatesDisplayLayer(wwd));
 
-        let pos = f.position(
-            //40.7638, -73.98584, 1000
-            46.232321, 6.0505552, 1000
-        );  //central park
+        // let pos = f.position(
+        //     //40.7638, -73.98584, 1000
+        //     46.232321, 6.0505552, 1000
+        // );  //central park
 
-        const countriesLayer = new WorldWind.RenderableLayer("Countries");
-        const shapefileLibrary = "https://worldwind.arc.nasa.gov/web/examples/data/shapefiles/naturalearth";
-        new WorldWind.Shapefile(shapefileLibrary + "/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp")
-            .load(null, (attributes, record) => {
-                const cfg = {};
+        const shapeFileOutlineLoader = (attributes, record) => {
+            const cfg = {};
+            cfg.name = attributes.values.name || attributes.values.Name || attributes.values.NAME;
+
+            if (record.isPointType()) { // Configure point-based features (cities, in this example)
                 cfg.name = attributes.values.name || attributes.values.Name || attributes.values.NAME;
+                cfg.attributes = new WorldWind.PlacemarkAttributes(placemarkAttributes);
 
-                if (record.isPointType()) { // Configure point-based features (cities, in this example)
-                    cfg.name = attributes.values.name || attributes.values.Name || attributes.values.NAME;
-                    cfg.attributes = new WorldWind.PlacemarkAttributes(placemarkAttributes);
-
-                } else if (record.isPolygonType()) { // Configure polygon-based features (countries, in this example).
-                    cfg.attributes = new WorldWind.ShapeAttributes(null);
-                    cfg.attributes.drawInterior = false;
-                    cfg.attributes.outlineWidth = 4;
-                    cfg.attributes.outlineColor = new WorldWind.Color(
-                        0.375 + 0.5 * Math.random(),
-                        0.375 + 0.5 * Math.random(),
-                        0.375 + 0.5 * Math.random(),
-                        1.0);
-                }
-
-                return cfg;
-            }, countriesLayer);
+            } else if (record.isPolygonType()) { // Configure polygon-based features (countries, in this example).
+                cfg.attributes = new WorldWind.ShapeAttributes(null);
+                cfg.attributes.drawInterior = false;
+                cfg.attributes.outlineWidth = 4;
+                cfg.attributes.outlineColor = new WorldWind.Color(
+                    0.375 + 0.5 * Math.random(),
+                    0.375 + 0.5 * Math.random(),
+                    0.375 + 0.5 * Math.random(),
+                    1.0);
+            }
+            //TODO other shape types
+            return cfg;
+        };
+        const countriesLayer = new WorldWind.RenderableLayer("Countries");
+        new WorldWind.Shapefile(
+            "https://worldwind.arc.nasa.gov/web/examples/data/shapefiles/naturalearth" +
+            "/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp"
+        ).load(null, shapeFileOutlineLoader, countriesLayer);
         f.addLayer(new WWLayer("Countries", countriesLayer).disable());
 
         // const cityLayer = new WorldWind.RenderableLayer("Cities");
@@ -907,6 +950,8 @@
         // new OSMNodes(f).update('node[amenity]<bbox>;',
         //     pos.latitude, pos.longitude, (40.78568 - 40.7638) / 2);
 
+        const pos = f.position();
+        console.log(pos);
         const osm = new OSMNodes(f);
         osm.update(
             '(way<bbox>; node<bbox>;);'
@@ -914,7 +959,7 @@
             , pos.latitude, pos.longitude, 0.007)
 
         $("#side_toggle").click(() => {
-            const body = document.body;//$('body');
+            const body = document.body;
             if (body.classList.contains('sideExpanded')) {
                 body.classList.remove('sideExpanded');
             } else {
