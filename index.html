@@ -612,7 +612,7 @@
             const ll = [];
             const p = new WorldWind.GeoJSONParser(x);
 
-            const altitudeDefault = 2, altitudeRoad = 2;
+            const altitudeDefault = 6, altitudeRoad = 4;
 
             p.addRenderablesForPoint = function (layer, geometry, properties) {
                 const cfg = this.shapeConfigurationCallback(geometry, properties);
@@ -679,7 +679,7 @@
                 cfg.attributes.drawOutline = false;
                 cfg.attributes.depthTest = true;
                 cfg.attributes.drawVerticals = false;
-                cfg.attributes.applyLighting = cfg.attributes.enableLighting = true;
+                cfg.attributes.applyLighting = cfg.attributes.enableLighting = false;
                 const shape = new WorldWind.Polygon(
                     b,
                     cfg && cfg.attributes ? cfg.attributes : null);
@@ -711,8 +711,7 @@
                 }
                 cfg.attributes.concept = properties;
                 cfg.attributes.depthTest = true;
-                cfg.attributes.applyLighting = cfg.attributes.enableLighting = true;
-                cfg.attributes.interiorColor = new WorldWind.Color(1, 0.5, 0, 1);
+                cfg.attributes.applyLighting = cfg.attributes.enableLighting = false;
                 cfg.attributes.drawInterior = true;
 
                 // cfg.attributes.outlineColor =
@@ -722,16 +721,37 @@
                 //cfg.attributes.outlineWidth = 4;
                 // cfg.attributes.applyLighting = true;
 
+
+                var thick = 1;
+                var color = undefined;
+
+                //console.log(properties);
+                if (properties.footway==='sidewalk') {
+                    thick = 0.5;
+                    color = new WorldWind.Color(0.5, 0.5, 0.5, 1);
+                }
+                if (properties.lanes === '1') {
+                    thick = 2;
+                    //color = new WorldWind.Color(0.5, 1, 0, 1);
+                } else if (properties.lanes === '2') {
+                    thick = 4;
+                    //color = new WorldWind.Color(0.5, 1, 0, 1);
+                } else {
+
+                }
+
+                cfg.attributes.interiorColor = color || new WorldWind.Color(1, 0.5, 0, 1);
+
                 const path =
                     // new WorldWind.Path(
                     //     //new WorldWind.SurfacePolyline(
                     //     positions, cfg.attributes);
-                    new WorldWind.Polygon(that.polygonize(positions), cfg.attributes);
+                    new WorldWind.Polygon(that.polygonize(positions, thick * 0.00005), cfg.attributes);
                     //new WorldWind.SurfacePolygon(that.polygonize(positions), cfg.attributes);
 
                 path.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
-                //path.followTerrain = true;
-                //path.extrude = true;
+                path.followTerrain = true;
+                path.extrude = true;
                 //path._numSubSegments = 3;
                 if (cfg && cfg.highlightAttributes) path.highlightAttributes = cfg.highlightAttributes;
                 if (cfg && cfg.pickDelegate) path.pickDelegate = cfg.pickDelegate;
@@ -756,16 +776,23 @@
 
         }
 
-        polygonize(positions) {
+        polygonize(positions, thick) {
             //TODO better
             const y = [];
+            const n = positions.length;
+            const theta = Math.atan2(positions[n-1].longitude - positions[0].longitude, positions[n-1].latitude - positions[0].latitude);
+            const thickHalfX = thick/2 * Math.cos(theta);
+            const thickHalfY = thick/2 * Math.sin(theta);
             _.forEach(positions, (x)=>{
-               y.push(x);
+                const xx = _.clone(x);
+                xx.longitude -= thickHalfX;
+                xx.latitude -= thickHalfY;
+                y.push(xx);
             });
             _.forEach(positions, (x)=>{
                 const xx = _.clone(x);
-                xx.longitude += 0.0001;
-                xx.latitude += 0.0001;
+                xx.longitude += thickHalfX;
+                xx.latitude += thickHalfY;
                 y.unshift(xx);
             });
             return y;
