@@ -155,18 +155,21 @@
         .buttonlike {
             cursor: pointer;
             color: white;
-            background-color: black;
+            /*background-color: black;*/
             min-height: 1em;
             min-width: 1em;
             vertical-align: central;
+            border: solid 0.05em transparent;
         }
 
         .buttonlike:hover {
             color: darkorange;
+            border-color: orange;
         }
 
         .buttonlike:active {
             color: gold;
+            border-color: gold;
         }
 
         #menu {
@@ -609,7 +612,7 @@
             const ll = [];
             const p = new WorldWind.GeoJSONParser(x);
 
-            const altitudeDefault = 2, altitudeRoad = 1;
+            const altitudeDefault = 2, altitudeRoad = 2;
 
             p.addRenderablesForPoint = function (layer, geometry, properties) {
                 const cfg = this.shapeConfigurationCallback(geometry, properties);
@@ -690,6 +693,7 @@
                 if (cfg && cfg.userProperties) shape.userProperties = cfg.userProperties;
                 ll.push(shape);
             };
+            const that = this;
             p.addRenderablesForLineString = function (layer, geometry, properties) {
 
                 if (!(!this.crs || this.crs.isCRSSupported()))
@@ -707,20 +711,24 @@
                 }
                 cfg.attributes.concept = properties;
                 cfg.attributes.depthTest = true;
-                //cfg.attributes.applyLighting = cfg.attributes.enableLighting = true;
-                //cfg.attributes.interiorColor = new WorldWind.Color(1, 0.5, 0, 0.9);
-                cfg.attributes.drawInterior = false;
+                cfg.attributes.applyLighting = cfg.attributes.enableLighting = true;
+                cfg.attributes.interiorColor = new WorldWind.Color(1, 0.5, 0, 1);
+                cfg.attributes.drawInterior = true;
 
-                cfg.attributes.outlineColor =
-                    //undefined;
-                    new WorldWind.Color(1, 0.5, 0, 1);
-                cfg.attributes.drawOutline = !!cfg.attributes.outlineColor;
-                cfg.attributes.outlineWidth = 10;
+                // cfg.attributes.outlineColor =
+                //     //undefined;
+                //     new WorldWind.Color(1, 0.5, 0, 1);
+                cfg.attributes.drawOutline = false;
+                //cfg.attributes.outlineWidth = 4;
+                // cfg.attributes.applyLighting = true;
 
                 const path =
-                    new WorldWind.Path(
-                        //new WorldWind.SurfacePolyline(
-                        positions, cfg.attributes);
+                    // new WorldWind.Path(
+                    //     //new WorldWind.SurfacePolyline(
+                    //     positions, cfg.attributes);
+                    new WorldWind.Polygon(that.polygonize(positions), cfg.attributes);
+                    //new WorldWind.SurfacePolygon(that.polygonize(positions), cfg.attributes);
+
                 path.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
                 //path.followTerrain = true;
                 //path.extrude = true;
@@ -746,6 +754,21 @@
                 return Y;
             }
 
+        }
+
+        polygonize(positions) {
+            //TODO better
+            const y = [];
+            _.forEach(positions, (x)=>{
+               y.push(x);
+            });
+            _.forEach(positions, (x)=>{
+                const xx = _.clone(x);
+                xx.longitude += 0.0001;
+                xx.latitude += 0.0001;
+                y.unshift(xx);
+            });
+            return y;
         }
 
         stop(focus) {
@@ -921,7 +944,7 @@
             } else if (record.isPolygonType()) { // Configure polygon-based features (countries, in this example).
                 cfg.attributes = new WorldWind.ShapeAttributes(null);
                 cfg.attributes.drawInterior = false;
-                cfg.attributes.outlineWidth = 4;
+                cfg.attributes.outlineWidth = 10;
                 cfg.attributes.outlineColor = new WorldWind.Color(
                     0.375 + 0.5 * Math.random(),
                     0.375 + 0.5 * Math.random(),
