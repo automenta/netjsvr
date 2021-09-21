@@ -32,9 +32,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css"/>
 
 
-    <script async src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.7/build/dat.gui.min.js" type="text/javascript"></script>
+    <script async src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.7/build/dat.gui.min.js"
+            type="text/javascript"></script>
 
-    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.18.2/cytoscape.min.js" type="text/javascript"></script>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.18.2/cytoscape.min.js"
+            type="text/javascript"></script>
 
     <style>
         body {
@@ -113,12 +115,15 @@
             height: 100%;
             overflow: auto;
             direction: rtl;
-            opacity: 0.9;
+            /*opacity: 0.9;*/
             /*display: flow;*/
         }
 
-        .cell {
+        #active * {
             direction: ltr; /* restore direction */
+        }
+
+        .cell {
             /*background-color: rgba(0.7, 0.7, 0.7, 0.75);*/
             background-color: black;
 
@@ -193,6 +198,10 @@
             text-shadow: none !important;
         }
 
+        .interestIcon {
+            padding: 0.25em;
+            font-size: 150%;
+        }
 
     </style>
 
@@ -233,6 +242,12 @@
         <div id="remembermenu_toggle" title="remember" class="buttonlike">s</div>
     </div>
     <div id="active">
+        <div id="layers">
+        </div>
+        <div id="interests" style="min-height: 400px;">
+        </div>
+        <div id="options">
+        </div>
     </div>
 </div>
 
@@ -243,18 +258,19 @@
     class Layer {
         constructor(name) {
             this.name = name;
-            this.element = $('<div>');
+            this.layerIconHolder = $('<div>');
             this.enabled = undefined;
         }
 
         start(focus) {
-            const e = this.element;
-            e.attr('class', 'cell').append(this.icon(focus));
-            $('#active').append(e);
+            const e = this.layerIconHolder;
+            e.attr('class', 'cell').append(this.layerIcon(focus));
+            $('#layers').append(e);
         }
 
         stop(focus) {
-            $('#active').remove(this.element);
+            //$('#layers').remove(this.layerIconHolder);
+            this.layerIconHolder.remove();
         }
 
         update(focus) {
@@ -264,7 +280,7 @@
         set enabled(e) {
             if (this._enabled !== e) {
                 this._enabled = e;
-                const ele = this.element;
+                const ele = this.layerIconHolder;
                 if (ele) {
                     if (e) ele.addClass('cell_enabled');
                     else ele.removeClass('cell_enabled');
@@ -287,7 +303,7 @@
         }
 
         /* produce an element for display in list */
-        icon(focus) {
+        layerIcon(focus) {
             return $('<button>').text(this.name);
         }
     }
@@ -313,7 +329,7 @@
             this.load();
         }
 
-        icon(focus) {
+        layerIcon(focus) {
             if (!this.pos) {
                 this.load();
                 this.go(focus);
@@ -322,10 +338,10 @@
             const d = $('<div>');
             d.append('<i class="buttonlike fa fa-home" style="font-size: 200%; float: left;"/>');
             d.append(this.label);
-            d.append($('<div>').text('Go').addClass('buttonlike').click(()=>{
+            d.append($('<div>').text('Go').addClass('buttonlike').click(() => {
                 this.go(focus);
             }));
-            d.append($('<div>').text('Set').addClass('buttonlike').click(()=>{
+            d.append($('<div>').text('Set').addClass('buttonlike').click(() => {
                 this.pos = _.clone(focus.view.camera.position);
                 this.save();
             }));
@@ -358,6 +374,7 @@
         start(focus) {
             super.start(focus);
             focus.view.addLayer(this.l);
+
             //focus.view.redraw(); //TODO debounce
         }
 
@@ -379,7 +396,7 @@
             return this;
         }
 
-        icon(focus) {
+        layerIcon(focus) {
             const layer = this.l;
 
             const toggleLabel = () => (layer.enabled ? "+" : "-") + this.name;
@@ -454,7 +471,7 @@
         constructor(focus) {
 
             this.focus = focus;
-            this.layers = new Map();
+            this.layer = new WorldWind.RenderableLayer();
 
             // const attr = new WorldWind.PlacemarkAttributes(null);
             // attr.imageSource = WorldWind.configuration.baseUrl + "images/white-dot.png";
@@ -542,8 +559,12 @@
                 _.round(latMax, 3), _.round(lonMax, 3));
 
             $.ajax({
-                url: 'https://overpass-api.de/api/interpreter?data='
-                    + encodeURIComponent(
+                url:
+                    //'https://overpass.openstreetmap.fr/api/interpreter'
+                    //'https://overpass-api.de/api/interpreter'
+                    'https://lz4.overpass-api.de/api/interpreter'
+                    //'https://z.overpass-api.de/api/interpreter'
+                    + '?data=' + encodeURIComponent(
                         '[out:json];\n' + query.replaceAll('<bbox>', bbox) + '\nout geom' + bbox + ';'
                     ),
                 contentType: 'application/json',
@@ -552,67 +573,56 @@
                     "Accepts": "text/plain; charset=utf-8",
                     "Cache-Control": 'max-age=3600'//<seconds>
                 }
-            }).done(X => this.addLayer(X));
+            }).done(X => this._load(X));
         }
 
         bbox(latMin, lonMin, latMax, lonMax) {
             return '(' + latMin + ',' + lonMin + ',' + latMax + ',' + lonMax + ')';
         }
 
-        addLayer(X) {
-
-            const that = this;
-            //console.log(X);
+        _load(X) {
             const x = osmtogeojson(X);
-
-
-            let features = x.features;
-
-            // features = _.filter(features, (z)=>{
-            //     return z.properties.amenity || (z.geometry.type==='Polygon' ||z.geometry.type==='LineString');
-            // });
-
-            //console.log(features);
-
-            const xx = _.groupBy(features, a => {
-                const p = a.properties;
-                if (p) {
-                    if (p.amenity) return p.amenity;
-                    if (p.highway) return 'Way';
-                    if (p.barrier) return 'Barrier';
-                    if (p.power) return 'Power';
-                    if (p.boundary) return 'Boundary'
-                    if (p.waterway) return 'Water'
-                    if (p.building) return 'Building'
-                }
-                //console.log(a);
-                return 'Other';
+            const features = _.filter(x.features, (z)=>{
+                return z.properties.amenity || (z.geometry.type==='Polygon' ||z.geometry.type==='LineString');
             });
-            _.forEach(xx, (features, amenity) => {
-                const y = _.clone(x);
-                //const y = _.cloneDeep(x);
-                y.features = features;
-                that.load(y, amenity)
-            });
-
+            _.forEach(features, f => this.load(f));
         }
 
-        layer(x) {
-            let y = this.layers.get(x);
-            if (!y) {
-                y = new WWLayer(x, new WorldWind.RenderableLayer()).disable();
-                this.layers.set(x, y);
-                this.focus.addLayer(y);
+        load(x) {
+
+            const interests = [];
+            {
+                //register inferred interests
+                const pp = x.properties;
+                // if (pp.amenity) interests.push(pp.amenity);
+                // if (pp.highway) interests.push('Way');
+                // if (pp.power) interests.push('Power');
+                // if (pp.boundary) interests.push('Boundary');
+                // if (pp.barrier) interests.push('Barrier');
+                // if (pp.waterway) interests.push('Water');
+                // if (pp.building) interests.push('Building');
+                // _.forEach(interests, i => {
+                //     this.focus.addInterest(pp.id, i);
+                // });
+                //console.log(pp);
+                const X = pp.id;
+                _.forEach(pp, (value, key) => {
+                    if (key === 'id' || key === 'name' || key === 'ele' || key.startsWith('addr') || key==='odbl' || key==='layer' || key === 'website' || key === 'source' || key.startsWith('gnis') || key.startsWith('tiger'))
+                        return;
+                    // this.focus.addInterest(X, key);
+                    // this.focus.addInterest(X, value);
+                    const keyvalue = key + '=' + value;
+                    this.focus.addInterest(X, keyvalue);
+                    this.focus.addInterest(keyvalue, key);
+                    const xx = this.focus.interests.getElementById(X);
+                    xx.style('display', 'none');
+                });
             }
-            return y;
-        }
-
-        load(x, name) {
 
             const ll = [];
             const p = new WorldWind.GeoJSONParser(x);
 
-            const altitudeDefault = 6, altitudeRoad = 4;
+            const altitudeDefault = 3.5, altitudeRoad = 2;
 
             p.addRenderablesForPoint = function (layer, geometry, properties) {
                 const cfg = this.shapeConfigurationCallback(geometry, properties);
@@ -713,20 +723,18 @@
                 cfg.attributes.depthTest = true;
                 cfg.attributes.applyLighting = cfg.attributes.enableLighting = false;
                 cfg.attributes.drawInterior = true;
-
                 // cfg.attributes.outlineColor =
                 //     //undefined;
                 //     new WorldWind.Color(1, 0.5, 0, 1);
                 cfg.attributes.drawOutline = false;
                 //cfg.attributes.outlineWidth = 4;
-                // cfg.attributes.applyLighting = true;
 
 
                 var thick = 1;
                 var color = undefined;
 
                 //console.log(properties);
-                if (properties.footway==='sidewalk') {
+                if (properties.footway === 'sidewalk') {
                     thick = 0.5;
                     color = new WorldWind.Color(0.5, 0.5, 0.5, 1);
                 }
@@ -747,11 +755,11 @@
                     //     //new WorldWind.SurfacePolyline(
                     //     positions, cfg.attributes);
                     new WorldWind.Polygon(that.polygonize(positions, thick * 0.00005), cfg.attributes);
-                    //new WorldWind.SurfacePolygon(that.polygonize(positions), cfg.attributes);
+                //new WorldWind.SurfacePolygon(that.polygonize(positions), cfg.attributes);
 
                 path.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
                 path.followTerrain = true;
-                path.extrude = true;
+                path.extrude = false;
                 //path._numSubSegments = 3;
                 if (cfg && cfg.highlightAttributes) path.highlightAttributes = cfg.highlightAttributes;
                 if (cfg && cfg.pickDelegate) path.pickDelegate = cfg.pickDelegate;
@@ -759,37 +767,42 @@
                 ll.push(path);
             };
 
-            const Y = this.layer(name);
-            const yl = Y.l;
+            // let y = this.layers.get(x);
+            // if (!y) {
+            //     y = new WWLayer(x, new WorldWind.RenderableLayer()).disable();
+            //     this.layers.set(x, y);
+            //     //this.focus.addLayer(y);
+            //     this.focus.addInterest(x);
+            // }
+            // const Y = y;
+
+            const yl = this.layer;
             yl.removeAllRenderables();
 
             p.load(null, this.shapeConfigurationCallback, yl);
 
             if (ll.length + yl.renderables.length === 0) {
-                this.layers.delete(name);
+                //this.layers.delete(name);
                 this.focus.removeLayer(Y);
-                return null;
             } else {
                 _.forEach(ll, yy => yl.addRenderable(yy));
-                return Y;
             }
-
         }
 
         polygonize(positions, thick) {
             //TODO better
             const y = [];
             const n = positions.length;
-            const theta = Math.atan2(positions[n-1].longitude - positions[0].longitude, positions[n-1].latitude - positions[0].latitude);
-            const thickHalfX = thick/2 * Math.cos(theta);
-            const thickHalfY = thick/2 * Math.sin(theta);
-            _.forEach(positions, (x)=>{
+            const theta = Math.atan2(positions[n - 1].longitude - positions[0].longitude, positions[n - 1].latitude - positions[0].latitude);
+            const thickHalfX = thick / 2 * Math.cos(theta);
+            const thickHalfY = thick / 2 * Math.sin(theta);
+            _.forEach(positions, (x) => {
                 const xx = _.clone(x);
                 xx.longitude -= thickHalfX;
                 xx.latitude -= thickHalfY;
                 y.push(xx);
             });
-            _.forEach(positions, (x)=>{
+            _.forEach(positions, (x) => {
                 const xx = _.clone(x);
                 xx.longitude += thickHalfX;
                 xx.latitude += thickHalfY;
@@ -807,6 +820,72 @@
     class Focus {
 
         constructor(view) {
+            this.layers = [];
+            //this.interests = new Map();
+            var cy = this.interests = cytoscape({
+
+                headless : true
+                //container: document.getElementById('interests'), // container to render in
+
+                // style: [ // the stylesheet for the graph
+                //     // cytoscape.stylesheet().selector('node').style({
+                //     //     'background-color': e => e.data('bg')
+                //     // }),
+                //     // cytoscape.stylesheet().selector('node').style({
+                //     //     'visible': e => e.data('instance') ? 'none': null
+                //     // }),
+                //     {
+                //         selector: 'node',
+                //         style: {
+                //             'background-color': '#666',
+                //             'label': 'data(id)'
+                //         }
+                //     },
+                //
+                //     {
+                //         selector: 'edge',
+                //         style: {
+                //             'width': 3,
+                //             'line-color': '#ccc'
+                //             // 'target-arrow-color': '#ccc',
+                //             // 'target-arrow-shape': 'triangle',
+                //             // 'curve-style': 'bezier'
+                //         }
+                //     }
+                // ]
+
+            });
+            //cy.userPanningEnabled(true);
+            //cy.boxSelectionEnabled(false);
+             //var layout = null;
+             cy.layoutNext = _.debounce(()=> {
+            //     cy.startBatch();
+            //     if (layout!==null)
+            //         layout.stop();
+            //
+                 const tgt = $('#interests');
+                 tgt.html('');
+                  const rank = cy.$().pageRank().rank;
+                  cy.nodes().forEach(x=>{
+                      let rx = rank(x);
+                      tgt.append($('<div>').text(x.id()).addClass('buttonlike').attr('style', 'font-size: ' + (Math.min(100,(rx * 1E5)) + 'px')));
+                      // const w = parseInt(rx * 1E5) + 'px';
+                      // //console.log(x.id(), x.style('width'), w);
+                      // x.style('width', w);
+                      // x.style('height', w);
+                  });
+            //
+            //     //console.log('layout');
+            //     layout = cy.layout({
+            //         //name: 'cose'
+            //         //name: 'random'
+            //         //name: 'grid'
+            //         name: 'breadthfirst'
+            //     });
+            //     layout.run();
+            //     cy.endBatch();
+            }, 500);
+
             this.view = view;
 
             let anim = null;
@@ -866,7 +945,7 @@
 
 
             };
-            finger = _.throttle(finger, 100);
+            finger = _.debounce(finger, 100);
 
             //var tapRecognizer = new WorldWind.TapRecognizer(view, finger);
             //view.addEventListener("mousemove", finger);
@@ -883,8 +962,6 @@
             //b.clear();
 
 
-            this.layers = [];
-
             const updatePeriodMS = 200;
             this.running = setInterval(this.run, updatePeriodMS);
         }
@@ -899,7 +976,7 @@
             const cam = this.cam();
             const pos = cam.position;
             if (lat && lon && alt) {
-                cam.tilt = 45;
+                //cam.tilt = 45;
                 pos.latitude = lat;
                 pos.longitude = lon;
                 pos.altitude = alt;
@@ -909,6 +986,38 @@
 
         cam() {
             return this.view.camera;
+        }
+
+        addInterest(x, y, cfg) {
+            // if (this.interests.get(i))
+            //     return; //ignore duplicate
+
+            // cy.add([
+            //     { group: 'nodes', data: { id: 'n0' }, position: { x: 100, y: 100 } },
+            //     { group: 'nodes', data: { id: 'n1' }, position: { x: 200, y: 200 } },
+            //     { group: 'edges', data: { id: 'e0', source: 'n0', target: 'n1' } }
+            // ]);
+            console.log(x, y);
+            this.interests.add([
+                { group: 'nodes', data: { id: x } },
+                { group: 'nodes', data: { id: y } },
+                { group: 'edges', data: { /*id: x + '__' + y,*/ source: x, target: y } }
+            ]);
+
+
+            this.interests.layoutNext();
+
+
+
+            //console.log(this.interests.nodes());
+            // if (cfg === undefined) cfg = new Map();
+            // this.interests.set(i, cfg);
+            // $('#interests').append($('<span>').append(this.interestIcon(i, cfg)), ' ');
+
+        }
+
+        interestIcon(i, cfg) {
+            return $('<span>').text(i).addClass('buttonlike').addClass('interestIcon');
         }
 
         addLayer(layer) {
@@ -943,9 +1052,10 @@
         //console.log(w);
         //w.deepPicking = true;
         w.camera.fieldOfView =
-            60;
-        //45;
-        //10;
+            //15;
+            //25;
+            40;
+        //60;
 
         const f = new Focus(w);
         //TODO w.clearLayers()
@@ -1001,7 +1111,7 @@
         //     pos.latitude, pos.longitude, (40.78568 - 40.7638) / 2);
 
         const pos = f.position();
-        console.log(pos);
+        //console.log(pos);
         const osm = new OSMNodes(f);
         osm.update(
             '(way<bbox>; node<bbox>;);'
