@@ -481,6 +481,7 @@
 
             this.focus = focus;
             this.layer = new WorldWind.RenderableLayer();
+            this.focus.view.addLayer(this.layer);
 
             // const attr = new WorldWind.PlacemarkAttributes(null);
             // attr.imageSource = WorldWind.configuration.baseUrl + "images/white-dot.png";
@@ -777,26 +778,16 @@
                 ll.push(path);
             };
 
-            // let y = this.layers.get(x);
-            // if (!y) {
-            //     y = new WWLayer(x, new WorldWind.RenderableLayer()).disable();
-            //     this.layers.set(x, y);
-            //     //this.focus.addLayer(y);
-            //     this.focus.addInterest(x);
-            // }
-            // const Y = y;
-
             const yl = this.layer;
-            yl.removeAllRenderables();
+
+            x.renderables = ll;
 
             p.load(null, this.shapeConfigurationCallback, yl);
 
-            if (ll.length + yl.renderables.length === 0) {
-                //this.layers.delete(name);
-                this.focus.removeLayer(Y);
-            } else {
-                _.forEach(ll, yy => yl.addRenderable(yy));
-            }
+            _.forEach(ll, yy => {
+                yy.enabled = false;
+                return yl.addRenderable(yy);
+            });
         }
 
         polygonize(positions, thick) {
@@ -832,6 +823,7 @@
         constructor(view) {
             this.layers = [];
 
+            const _focus = this;
             var attn = this.attn = cytoscape({
 
                 headless : true
@@ -882,8 +874,9 @@
                          return;
 
                      const rx = rank(x);
-                     let xid = x.id();
-                     const icon = $('<div>').text(xid).addClass('interest').addClass('buttonlike').attr('style', 'font-size: ' + (Math.min(100,(rx * 1E5)) + 'px'));
+                     const xid = x.id();
+                     //console.log(xid, rx);
+                     const icon = $('<div>').text(xid).addClass('interest').addClass('buttonlike').attr('style', 'font-size: ' + (Math.min(70,(rx * 2E4)) + 'px'));
                      let goalSelect = $('<select>').append(
                          $('<option>').text('++'),
                          $('<option>').text('+'),
@@ -893,11 +886,16 @@
                      );
                      goalSelect.change(()=>{
                         var dfs = attn.elements().dfs({
-                             roots: '#' + xid,
+                             roots: attn.getElementById(xid),
                              visit: function(v, e, u, i, depth){
-                                 console.log(xid, ' -> ' + v.id() );
-                                 if (v.data('instance')) {
-
+                                 //console.log(xid, ' -> ' + v);
+                                 const V = v.data('instance');
+                                 if (V && V.renderables) {
+                                     _.forEach(V.renderables, (vr) => {
+                                         vr.enabled = true;
+                                         //vr.layer.refresh();
+                                     });
+                                     _focus.view.redraw();
                                  }
 
                                  // // example of finding desired node
