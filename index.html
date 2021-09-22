@@ -880,11 +880,20 @@
                      let goalSelect = $('<select>').append(
                          $('<option>').text('++'),
                          $('<option>').text('+'),
-                         $('<option selected>').text(' '),
+                         $('<option selected>').text('0'),
                          $('<option>').text('-'),
                          $('<option>').text('--')
                      );
-                     goalSelect.change(()=>{
+                     goalSelect.change((e)=>{
+                         var goal = 0;
+                         switch(e.target.value) {
+                             case '--': goal = -2; break;
+                             case '-': goal = -1; break;
+                             case '+': goal = +1; break;
+                             case '++': goal = +2; break;
+                         }
+                         x.data('goal', goal);
+                         console.log(xid, x.data('goal'));
                         var dfs = attn.elements().dfs({
                              roots: attn.getElementById(xid),
                              visit: function(v, e, u, i, depth){
