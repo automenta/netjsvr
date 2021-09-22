@@ -51,8 +51,7 @@
         }
 
         div {
-            transition: 0.25s;
-            /*opacity: 0.5;*/
+            /*transition: 0.25s;*/
         }
 
         /*div:hover {*/
@@ -175,6 +174,16 @@
         .buttonlike:active {
             color: gold;
             border-color: gold;
+        }
+
+        .buttonlike select {
+            color: white;
+            background-color: black;
+            border-color: transparent;
+            /*font-size: 50%;*/
+        }
+        .buttonlike select:hover {
+            border-color:orange;
         }
 
         #menu {
@@ -614,8 +623,9 @@
                     const keyvalue = key + '=' + value;
                     this.focus.addInterest(X, keyvalue);
                     this.focus.addInterest(keyvalue, key);
-                    const xx = this.focus.interests.getElementById(X);
-                    xx.style('display', 'none');
+                    const xx = this.focus.attn.getElementById(X);
+                    xx.data('instance', x);
+                    //xx.style('display', 'none');
                 });
             }
 
@@ -821,8 +831,8 @@
 
         constructor(view) {
             this.layers = [];
-            //this.interests = new Map();
-            var cy = this.interests = cytoscape({
+
+            var attn = this.attn = cytoscape({
 
                 headless : true
                 //container: document.getElementById('interests'), // container to render in
@@ -858,17 +868,50 @@
             //cy.userPanningEnabled(true);
             //cy.boxSelectionEnabled(false);
              //var layout = null;
-             cy.layoutNext = _.debounce(()=> {
+             attn.attnUpdated = _.debounce(()=> {
             //     cy.startBatch();
             //     if (layout!==null)
             //         layout.stop();
             //
                  const tgt = $('#interests');
                  tgt.html('');
-                  const rank = cy.$().pageRank().rank;
-                  cy.nodes().forEach(x=>{
-                      let rx = rank(x);
-                      tgt.append($('<div>').text(x.id()).addClass('buttonlike').attr('style', 'font-size: ' + (Math.min(100,(rx * 1E5)) + 'px')));
+
+                 const rank = attn.$().pageRank().rank;
+                 attn.elements("node").forEach(x=>{
+                     if (x.data('instance'))
+                         return;
+
+                     const rx = rank(x);
+                     let xid = x.id();
+                     const icon = $('<div>').text(xid).addClass('interest').addClass('buttonlike').attr('style', 'font-size: ' + (Math.min(100,(rx * 1E5)) + 'px'));
+                     let goalSelect = $('<select>').append(
+                         $('<option>').text('++'),
+                         $('<option>').text('+'),
+                         $('<option selected>').text(' '),
+                         $('<option>').text('-'),
+                         $('<option>').text('--')
+                     );
+                     goalSelect.change(()=>{
+                        var dfs = attn.elements().dfs({
+                             roots: '#' + xid,
+                             visit: function(v, e, u, i, depth){
+                                 console.log(xid, ' -> ' + v.id() );
+                                 if (v.data('instance')) {
+
+                                 }
+
+                                 // // example of finding desired node
+                                 // if( v.data('weight') > 70 )
+                                 //     return true;
+                                 // // example of exiting search early
+                                 // if( v.data('weight') < 0 )
+                                 //     return false;
+                             },
+                             directed: true
+                         });
+                     });
+                     icon.prepend(goalSelect);
+                     tgt.append(icon);
                       // const w = parseInt(rx * 1E5) + 'px';
                       // //console.log(x.id(), x.style('width'), w);
                       // x.style('width', w);
@@ -992,22 +1035,14 @@
             // if (this.interests.get(i))
             //     return; //ignore duplicate
 
-            // cy.add([
-            //     { group: 'nodes', data: { id: 'n0' }, position: { x: 100, y: 100 } },
-            //     { group: 'nodes', data: { id: 'n1' }, position: { x: 200, y: 200 } },
-            //     { group: 'edges', data: { id: 'e0', source: 'n0', target: 'n1' } }
-            // ]);
-            console.log(x, y);
-            this.interests.add([
+            //console.log(x, y);
+            this.attn.add([
                 { group: 'nodes', data: { id: x } },
                 { group: 'nodes', data: { id: y } },
-                { group: 'edges', data: { /*id: x + '__' + y,*/ source: x, target: y } }
+                { group: 'edges', data: { /*id: x + '__' + y,*/ source: y, target: x } }
             ]);
 
-
-            this.interests.layoutNext();
-
-
+            this.attn.attnUpdated();
 
             //console.log(this.interests.nodes());
             // if (cfg === undefined) cfg = new Map();
@@ -1016,9 +1051,9 @@
 
         }
 
-        interestIcon(i, cfg) {
-            return $('<span>').text(i).addClass('buttonlike').addClass('interestIcon');
-        }
+        // interestIcon(i, cfg) {
+        //     return $('<span>').text(i).addClass('buttonlike').addClass('interestIcon');
+        // }
 
         addLayer(layer) {
             this.layers.push(layer);
