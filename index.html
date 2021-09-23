@@ -741,8 +741,8 @@
                 //cfg.attributes.outlineWidth = 4;
 
 
-                var thick = 1;
-                var color = undefined;
+                let thick = 1;
+                let color = undefined;
 
                 //console.log(properties);
                 if (properties.footway === 'sidewalk') {
@@ -824,9 +824,9 @@
             this.layers = [];
 
             const _focus = this;
-            var attn = this.attn = cytoscape({
+            const attn = this.attn = cytoscape({
 
-                headless : true
+                headless: true
                 //container: document.getElementById('interests'), // container to render in
 
                 // style: [ // the stylesheet for the graph
@@ -885,16 +885,17 @@
                          $('<option>').text('--')
                      );
                      goalSelect.change((e)=>{
-                         var goal = 0;
+                         let goal;
                          switch(e.target.value) {
                              case '--': goal = -2; break;
-                             case '-': goal = -1; break;
-                             case '+': goal = +1; break;
+                             case '-':  goal = -1; break;
+                             default:   goal =  0; break;
+                             case '+':  goal = +1; break;
                              case '++': goal = +2; break;
                          }
                          x.data('goal', goal);
-                         console.log(xid, x.data('goal'));
-                        var dfs = attn.elements().dfs({
+                         //console.log(xid, x.data('goal'));
+                         attn.elements().dfs({
                              roots: attn.getElementById(xid),
                              visit: function(v, e, u, i, depth){
                                  //console.log(xid, ' -> ' + v);
