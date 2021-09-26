@@ -3,7 +3,6 @@
 # Layers
  * yields Objects and Tags (adaptively cached in digraph).  
  * refreshed periodically or when focus location changes.
- * includes base layers and other decorations
 
 ### Home
 For control of the focus: position (incl. range), time (incl. range)
