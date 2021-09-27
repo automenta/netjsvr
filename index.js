@@ -15,63 +15,20 @@ class Focus {
             const rank = attn.$().
                 //pageRank().rank;
                 degreeCentralityNormalized().degree;
+                //closenessCentralityNormalized().closeness;
 
-            attn.elements("node").forEach(x=>{
-                if (x.data('instance'))
-                    return;
-
-                const rx = rank(x);
-                const xid = x.id();
-                const icon = $('<div>').text(xid)
-                    .addClass('interest').addClass('buttonlike')
-                    .attr('style', 'font-size: ' + (Math.min(70,rx * 2E4) + 'px'));
-
-                let goalSelect = $('<select>').append(
-                    $('<option>').text('++'),
-                    $('<option>').text('+'),
-                    $('<option selected>').text(' '),
-                    $('<option>').text('-'),
-                    $('<option>').text('--')
-                );
-                goalSelect.change(e =>{
-                    let goal;
-                    switch(e.target.value) {
-                        case '--': goal = -2; break;
-                        case '-':  goal = -1; break;
-                        default:   goal =  0; break;
-                        case '+':  goal = +1; break;
-                        case '++': goal = +2; break;
-                    }
-                    x.data('goal', goal);
-                    //console.log(xid, x.data('goal'));
-                    attn.elements().dfs({
-                        roots: attn.getElementById(xid),
-                        visit: (v, e, u, i, depth) => {
-                            //console.log(xid, ' -> ' + v);
-                            const V = v.data('instance');
-                            if (V && V.renderables) {
-                                _.forEach(V.renderables, vr => {
-                                    vr.enabled = true;
-                                    //vr.layer.refresh();
-                                });
-                                this.view.redraw();
-                            }
-
-                            // // example of finding desired node
-                            // if( v.data('weight') > 70 )
-                            //     return true;
-                            // // example of exiting search early
-                            // if( v.data('weight') < 0 )
-                            //     return false;
-                        },
-                        directed: true
-                    });
-                });
-                icon.prepend(goalSelect);
+            attn.nodes().roots().sort((a,b)=>rank(b)-rank(a)).forEach(x=>{
+                //if (x.data('instance')) return;
+                const icon = this.interestIcon(x, rank, attn);
                 tgt.append(icon);
 
+                //console.log(x.outgoers());
+                x.outgoers().nodes().forEach(xe => {
+                   icon.append(this.interestIcon(xe, rank, attn));
+                });
+
             });
-        }, 500);
+        }, 200);
         this.attn = attn;
 
         let anim = null;
@@ -138,6 +95,63 @@ class Focus {
 
         const updatePeriodMS = 200;
         this.running = setInterval(this.run, updatePeriodMS);
+    }
+
+    interestIcon(x, rank, attn) {
+        const rx = rank(x);
+        const xid = x.id();
+        const icon = $('<div>').text(xid)
+            .addClass('interestIcon').addClass('buttonlike')
+            .attr('style', `font-size: ${Math.min(150, 100 * Math.log(1 + rx * 1E3))}%`);
+
+        let goalSelect = $('<select>').append(
+            $('<option>').text('++'),
+            $('<option>').text('+'),
+            $('<option selected>').text(' '),
+            $('<option>').text('-'),
+            $('<option>').text('--')
+        );
+        goalSelect.change(e => {
+            let goal;
+            switch (e.target.value) {
+                case '--':
+                    goal = -2;
+                    break;
+                case '-':
+                    goal = -1;
+                    break;
+                default:
+                    goal = 0;
+                    break;
+                case '+':
+                    goal = +1;
+                    break;
+                case '++':
+                    goal = +2;
+                    break;
+            }
+            x.data('goal', goal);
+
+            attn.elements().dfs({
+                roots: attn.getElementById(xid),
+                visit: (v, e, u, i, depth) => {
+                    //console.log(xid, ' -> ' + v);
+                    const V = v.data('instance');
+                    if (V && V.renderables) {
+                        _.forEach(V.renderables, vr => {
+                            vr.enabled = true;
+                            //vr.layer.refresh();
+                        });
+                        this.view.redraw();
+                    }
+                },
+                directed: true
+            });
+        });
+        icon.prepend(goalSelect);
+
+        const iconWrapper = $('<div>').addClass('interestGroup').append(icon);
+        return iconWrapper;
     }
 
     run() {

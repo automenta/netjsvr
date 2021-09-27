@@ -7,7 +7,7 @@ class HomeLayer extends Layer {
     load() {
         try {
             this.pos = JSON.parse(localStorage.home);
-            this.label.text(JSON.stringify(this.pos));
+            //this.label.text(JSON.stringify(this.pos));
         } catch (e) {
             this.pos = undefined;
             delete localStorage.home; //corrupt?

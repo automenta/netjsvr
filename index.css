@@ -1,37 +1,28 @@
 body {
     background-color: black;
-    font-size: 150%;
     font-family: monospace;
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
     position: fixed;
-}
-
-div {
     /*transition: 0.25s;*/
 }
 
-/*div:hover {*/
-/*    opacity: 1.0;*/
-/*}*/
-
-body:not(.sideExpanded) .content {
+.content {
     position: fixed;
-    width: 100%;
-    height: 100%;
     margin: 0;
     padding: 0;
 }
+body:not(.sideExpanded) .content {
+    width: 100%;
+    height: 100%;
+}
 
 body.sideExpanded .content {
-    position: fixed;
     right: 0;
     width: 75%;
     height: 100%;
-    margin: 0;
-    padding: 0;
 }
 
 body.sideExpanded .side {
@@ -169,4 +160,20 @@ body:not(.sideExpanded) * #menu {
 .interestIcon {
     padding: 0.25em;
     font-size: 150%;
+}
+
+#menu .buttonlike {
+    background-color: rgba(0,0,0,0.5);
+    font-size: 200%;
+    direction: rtl;
+}
+#menu .buttonlike:hover {
+    transform: scale(1.5);
+}
+
+.interestIcon {
+    display: flex;
+}
+.interestGroup .interestGroup {
+    margin-left: 1em;
 }
