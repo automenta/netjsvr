@@ -1,5 +1,9 @@
 # 🐈🎮 | GLOBAL SURVIVAL SYSTEM | CLIMATE EDITOR 3D | SPACETIME TAG PLANNER
 
+Real-time decentralized global propagation, notification, and analysis tools for AUTONOMY MAXIMIZATION and AUTHORITY DISSOLUTION.
+
+Learn how natural and artificial phenomena, from past to present, underground to outer space... might affect the quality and length of our futures.
+
 # Layers
  * yields Objects and Tags (adaptively cached in digraph).  
  * refreshed periodically or when focus location changes.

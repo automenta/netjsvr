@@ -138,9 +138,11 @@ class Focus {
                     //console.log(xid, ' -> ' + v);
                     const V = v.data('instance');
                     if (V && V.renderables) {
-                        _.forEach(V.renderables, vr => {
-                            vr.enabled = true;
-                            //vr.layer.refresh();
+                        _.forEach(V.renderables, r => {
+                            if (goal === 0)
+                                r.enabled = false;
+                            else
+                                r.enabled = true;
                         });
                         this.view.redraw();
                     }
@@ -150,8 +152,7 @@ class Focus {
         });
         icon.prepend(goalSelect);
 
-        const iconWrapper = $('<div>').addClass('interestGroup').append(icon);
-        return iconWrapper;
+        return $('<div>').addClass('interestGroup').append(icon);
     }
 
     run() {

@@ -93,10 +93,10 @@ class OSMNodes extends GeoLayer {
 
         $.ajax({
             url:
-                'https://lz4.overpass-api.de/api/interpreter'
+                'https://z.overpass-api.de/api/interpreter'
+                //'https://lz4.overpass-api.de/api/interpreter'
                 //'https://overpass.openstreetmap.fr/api/interpreter'
                 //'https://overpass-api.de/api/interpreter'
-                //'https://z.overpass-api.de/api/interpreter'
                 + '?data=' + encodeURIComponent(
                     '[out:json];\n' + query.replaceAll('<bbox>', bbox) + '\nout geom' + bbox + ';'
                 ),
@@ -104,7 +104,7 @@ class OSMNodes extends GeoLayer {
             dataType: 'json',
             headers: {
                 "Accepts": "text/plain; charset=utf-8",
-                "Cache-Control": 'max-age=3600'//<seconds> //TODO this may not do anything
+                "Cache-Control": 'max-age=3600'//<seconds> //TODO this may not matter
             }
         }).done(X => this._load(X));
     }
