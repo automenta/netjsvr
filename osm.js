@@ -135,24 +135,30 @@ class OSMNodes extends GeoLayer {
         // if (pp.waterway) interests.push('Water');
         // if (pp.building) interests.push('Building');
         // _.forEach(interests, i => {
-        //     this.focus.addInterest(pp.id, i);
+        //     this.focus.link(pp.id, i);
         // });
         //console.log(pp);
+
+        //custom ontology:
+        this.focus.link('highway', 'way');
+        this.focus.link('cycleway', 'way');
+        this.focus.link('sidewalk', 'way');
+        this.focus.link('steps', 'way');
+
+
         const X = pp.id;
         _.forEach(pp, (value, key) => {
-            if (key === 'id' || key === 'name' || key === 'ele' || key.startsWith('addr') || key==='odbl' || key==='layer' || key === 'website' || key.startsWith('source') || key.startsWith('gnis') || key.startsWith('tiger'))
+            if (key === 'id' || key === 'name' || key === 'ele' || key.startsWith('addr') || key==='odbl' || key==='layer' || key === 'website' || key.startsWith('source') || key.startsWith('gnis') || key.startsWith('tiger') || key.startsWith('brand:'))
                 return;
-            // this.focus.addInterest(X, key);
-            // this.focus.addInterest(X, value);
-            // if (value === 'yes') {
-            //     this.focus.addInterest(X, key);
-            // } else {
-                const keyvalue = key + '=' + value;
-                this.focus.addInterest(X, keyvalue);
-                this.focus.addInterest(keyvalue, key);
-                if (value!=='yes' && value!=='no' && parseFloat(value)===NaN)
-                    this.focus.addInterest(keyvalue, value);
-            // }
+
+            //custom rewrites:
+            if (key === 'foot') key = 'walkable';
+
+            const keyvalue = key + '=' + value;
+            this.focus.link(X, keyvalue);
+            this.focus.link(keyvalue, key);
+            if (value!=='yes' && value!=='no' && !_.isNumber(parseFloat(value)))
+                this.focus.link(keyvalue, value);
             const xx = this.focus.attn.getElementById(X);
             xx.data('instance', x);
             //xx.style('display', 'none');
