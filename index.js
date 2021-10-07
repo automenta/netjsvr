@@ -12,12 +12,16 @@ class Focus {
             const tgt = $('#interests');
             tgt.html('');
 
-            const rank = attn.$().
+            const mst = attn.$().filter(e => {
+                return !e.isNode() || !e.data('instance');
+            }).kruskal();
+
+            const rank = mst //attn.$()
                 //pageRank().rank;
-                degreeCentralityNormalized().degree;
+                .degreeCentralityNormalized().degree;
                 //closenessCentralityNormalized().closeness;
 
-            attn.nodes().roots().sort((a,b)=>rank(b)-rank(a)).forEach(x=>{
+            mst/*attn*/.nodes().roots().sort((a,b)=>rank(b)-rank(a)).forEach(x=>{
                 //if (x.data('instance')) return;
                 const icon = this.interestIcon(x, rank, attn);
                 tgt.append(icon);
@@ -131,6 +135,13 @@ class Focus {
                     break;
             }
             x.data('goal', goal);
+            switch(goal) {
+                case -2: icon.css('background-color', '#922'); break;
+                case -1: icon.css('background-color', '#600'); break;
+                case  0: icon.css('background-color', 'transparent'); break;
+                case +1: icon.css('background-color', '#060'); break;
+                case +2: icon.css('background-color', '#292'); break;
+            }
 
             attn.elements().dfs({
                 roots: attn.getElementById(xid),

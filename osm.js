@@ -140,13 +140,19 @@ class OSMNodes extends GeoLayer {
         //console.log(pp);
         const X = pp.id;
         _.forEach(pp, (value, key) => {
-            if (key === 'id' || key === 'name' || key === 'ele' || key.startsWith('addr') || key==='odbl' || key==='layer' || key === 'website' || key === 'source' || key.startsWith('gnis') || key.startsWith('tiger'))
+            if (key === 'id' || key === 'name' || key === 'ele' || key.startsWith('addr') || key==='odbl' || key==='layer' || key === 'website' || key.startsWith('source') || key.startsWith('gnis') || key.startsWith('tiger'))
                 return;
             // this.focus.addInterest(X, key);
             // this.focus.addInterest(X, value);
-            const keyvalue = key + '=' + value;
-            this.focus.addInterest(X, keyvalue);
-            this.focus.addInterest(keyvalue, key);
+            // if (value === 'yes') {
+            //     this.focus.addInterest(X, key);
+            // } else {
+                const keyvalue = key + '=' + value;
+                this.focus.addInterest(X, keyvalue);
+                this.focus.addInterest(keyvalue, key);
+                if (value!=='yes' && value!=='no' && parseFloat(value)===NaN)
+                    this.focus.addInterest(keyvalue, value);
+            // }
             const xx = this.focus.attn.getElementById(X);
             xx.data('instance', x);
             //xx.style('display', 'none');
