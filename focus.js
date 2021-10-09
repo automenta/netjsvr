@@ -120,12 +120,12 @@ class Focus {
            if (I > 0) {
                //TODO double-buffer
                x.incomers().nodes().forEach(i => {
-                   this.goalAdd(i, g * inRate / I);
+                   this.goalAdd(i, g * inRate / I); //TODO goalLerp
                });
            }
            if (O > 0) {
                x.outgoers().nodes().forEach(o => {
-                   this.goalAdd(o, g * outRate / O);
+                   this.goalAdd(o, g * outRate / O); //TODO goalLerp
                });
            }
         });
@@ -157,6 +157,7 @@ class Focus {
                                         r.attributes.interiorColor.red = _red;
                                         r.attributes.interiorColor.green = _green;
                                         r.attributes.interiorColor.blue = 0;
+                                        r.attributes.interiorColor.alpha = Math.abs(gx);
                                     }
                                 }
                             });
