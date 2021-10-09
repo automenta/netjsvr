@@ -116,7 +116,8 @@ class OSMNodes extends GeoLayer {
     _load(X) {
         const x = osmtogeojson(X);
         const features = _.filter(x.features, z =>{
-            return z.properties.amenity || (z.geometry.type==='Polygon' ||z.geometry.type==='LineString');
+            return true;
+            //return z.properties.amenity || (z.geometry.type==='Polygon' ||z.geometry.type==='LineString');
         });
         _.forEach(features, f => this.load(f));
     }
@@ -137,7 +138,7 @@ class OSMNodes extends GeoLayer {
         // _.forEach(interests, i => {
         //     this.focus.link(pp.id, i);
         // });
-        //console.log(pp);
+
 
         //custom ontology:
         this.focus.link('highway', 'way');
@@ -200,14 +201,16 @@ class OSMNodes extends GeoLayer {
             attr.applyLighting = true;
             icon.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
             icon.attributes = attr;
-            if (cfg && cfg.name) icon.label = cfg.name;
-            if (cfg && cfg.eyeDistanceScaling) icon.eyeDistanceScaling = cfg.eyeDistanceScaling;
-            if (cfg && cfg.eyeDistanceScalingThreshold) icon.eyeDistanceScalingThreshold = cfg.eyeDistanceScalingThreshold;
-            if (cfg && cfg.imageRotation) icon.imageRotation = cfg.imageRotation;
-            if (cfg && cfg.imageRotationReference) icon.imageRotationReference = cfg.imageRotationReference;
-            if (cfg && cfg.highlightAttributes) icon.highlightAttributes = cfg.highlightAttributes;
-            if (cfg && cfg.pickDelegate) icon.pickDelegate = cfg.pickDelegate;
-            if (cfg && cfg.userProperties) icon.userProperties = cfg.userProperties;
+            if (cfg) {
+                if (cfg.name) icon.label = cfg.name;
+                if (cfg.eyeDistanceScaling) icon.eyeDistanceScaling = cfg.eyeDistanceScaling;
+                if (cfg.eyeDistanceScalingThreshold) icon.eyeDistanceScalingThreshold = cfg.eyeDistanceScalingThreshold;
+                if (cfg.imageRotation) icon.imageRotation = cfg.imageRotation;
+                if (cfg.imageRotationReference) icon.imageRotationReference = cfg.imageRotationReference;
+                if (cfg.highlightAttributes) icon.highlightAttributes = cfg.highlightAttributes;
+                if (cfg.pickDelegate) icon.pickDelegate = cfg.pickDelegate;
+                if (cfg.userProperties) icon.userProperties = cfg.userProperties;
+            }
             ll.push(icon);
         };
 
@@ -243,9 +246,11 @@ class OSMNodes extends GeoLayer {
             if (properties.name)
                 shape.displayName = properties.name;
 
-            if (cfg && cfg.highlightAttributes) shape.highlightAttributes = cfg.highlightAttributes;
-            if (cfg && cfg.pickDelegate) shape.pickDelegate = cfg.pickDelegate;
-            if (cfg && cfg.userProperties) shape.userProperties = cfg.userProperties;
+
+            if (cfg.highlightAttributes) shape.highlightAttributes = cfg.highlightAttributes;
+            if (cfg.pickDelegate) shape.pickDelegate = cfg.pickDelegate;
+            if (cfg.userProperties) shape.userProperties = cfg.userProperties;
+
             ll.push(shape);
         };
         const that = this;

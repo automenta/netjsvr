@@ -36,6 +36,12 @@ class Focus {
         }, 200);
         this.attn = attn;
 
+        this.GOAL_EPSILON = 0.01;
+
+        this.spread = _.debounce(()=>{
+            this._spread();
+        }, 100);
+
         let anim = null;
 
         // The common pick-handling function.
@@ -102,6 +108,92 @@ class Focus {
         this.running = setInterval(this.run, updatePeriodMS);
     }
 
+    /** spreading activation iteration */
+    _spread() {
+        const inRate = 0.1;
+        const outRate = 0.2;
+        this.attn.nodes().forEach(x => {
+           const g = this.goal(x);
+           if (Math.abs(g) < this.GOAL_EPSILON) return;
+
+           const I = x.indegree(), O = x.outdegree();
+           if (I > 0) {
+               //TODO double-buffer
+               x.incomers().nodes().forEach(i => {
+                   this.goalAdd(i, g * inRate / I);
+               });
+           }
+           if (O > 0) {
+               x.outgoers().nodes().forEach(o => {
+                   this.goalAdd(o, g * outRate / O);
+               });
+           }
+        });
+        this.attn.nodes().forEach(x => {
+            const icon = x.data('icon');
+            if (icon) {
+                const gx = this.goal(x);
+                const _green = Math.max(gx, 0);
+                const green = parseInt(_green * 256);
+                const _red = Math.max(-gx, 0);
+                const red = parseInt(_red * 256);
+                const blue = 0;
+                icon.css('background-color', 'rgba(' + red + ',' + green + ',' + blue + ', 1)');
+
+                this.attn.elements().dfs({
+                    roots: x,//attn.getElementById(xid),
+                    directed: true,
+                    visit: (v, e, u, i, depth) => {
+                        //console.log(xid, ' -> ' + v);
+                        const V = v.data('instance');
+                        if (V && V.renderables) {
+                            _.forEach(V.renderables, r => {
+                                //console.log(r);
+                                if (Math.abs(gx) < this.GOAL_EPSILON)
+                                    r.enabled = false;
+                                else {
+                                    r.enabled = true;
+                                    if (r.attributes && r.attributes.interiorColor) {
+                                        r.attributes.interiorColor.red = _red;
+                                        r.attributes.interiorColor.green = _green;
+                                        r.attributes.interiorColor.blue = 0;
+                                    }
+                                }
+                            });
+                            //this.view.redraw();
+                        }
+                    }
+                });
+
+            }
+        });
+        this.view.redraw();
+    }
+
+    goal(x) {
+        if (typeof(x)==='string')
+            x = this.attn.getElementById(x);
+        if (x === undefined) return 0;
+        const y = x.data('goal');
+        if (y === undefined) return 0;
+        return y;
+    }
+
+    goalAdd(x, dg, update = false) {
+
+        if (Math.abs(dg) < this.GOAL_EPSILON)
+            return;
+
+        var g = x.data('goal');
+        if (g === undefined) g = 0;
+        g += dg;
+        if (g > +1) g = +1;
+        else if (g < -1) g = -1;
+        x.data('goal', g);
+        if (update)
+            this.spread();
+    }
+
     interestIcon(x, rank, attn) {
         const rx = rank(x);
         const xid = x.id();
@@ -109,6 +201,21 @@ class Focus {
             .addClass('interestIcon').addClass('buttonlike')
             .css('font-size', `${Math.min(150, 100 * Math.log(1 + rx * 1E3))}%`);
 
+        const ctl = $('<div>');
+        x.data('icon', icon);
+
+        ctl.append(
+            $('<button>').text('+').click(()=>{
+                this.goalAdd(x, +0.25, true);
+            })
+        ).append(
+            $('<button>').text('-').click(()=>{
+                this.goalAdd(x, -0.25, true);
+            })
+        );
+        icon.prepend(ctl);
+
+        /*
         let goalSelect = $('<select>').append(
             $('<option>').text('++'),
             $('<option>').text('+'),
@@ -163,6 +270,9 @@ class Focus {
             });
         });
         icon.prepend(goalSelect);
+        */
+
+
 
         return $('<div>').addClass('interestGroup').append(icon);
     }
