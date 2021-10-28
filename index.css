@@ -1,6 +1,13 @@
+/*@font-face{*/
+/*    font-family: "_Mono";*/
+/*    src: url("css/big-pixel-shadowed-demo.demo.otf");*/
+/*}*/
+
 body {
+    color: white;
     background-color: black;
     font-family: monospace;
+    /*font-family: '_Mono';*/
     margin: 0;
     padding: 0;
     width: 100%;
@@ -79,7 +86,7 @@ body:not(.sideExpanded) .side #active {
     color: white;
 
     /*opacity:0.9;*/
-    width: auto;
+    /*width: auto;*/
 
     padding: 0.1em;
     margin: 0.2em;
@@ -165,7 +172,8 @@ body:not(.sideExpanded) * #menu {
 #menu .buttonlike {
     background-color: rgba(0,0,0,0.5);
     font-size: 200%;
-    direction: rtl;
+    text-align: center;
+    /*margin-bottom: 0.5em;*/
 }
 #menu .buttonlike:hover {
     transform: scale(1.5);
@@ -176,4 +184,10 @@ body:not(.sideExpanded) * #menu {
 }
 .interestGroup .interestGroup {
     margin-left: 1em;
+}
+#layers {
+    display: flex;
+}
+#layers div {
+    overflow: hidden;
 }

@@ -4,40 +4,42 @@
     <meta charset="utf-8">
     <title>netvr</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" type="text/javascript" async></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" type="text/javascript" ></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" type="text/javascript" async></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" type="text/javascript" ></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/worldwindjs@1.8.0/build/dist/worldwind.min.js" type="text/javascript" async></script>
+    <script src="https://cdn.jsdelivr.net/npm/worldwindjs@1.8.0/build/dist/worldwind.min.js" type="text/javascript" ></script>
 
     <!--
     OSM Tags
       https://taginfo.openstreetmap.org/download
       https://wiki.openstreetmap.org/wiki/Category:Tag_descriptions
     -->
-    <script src="https://unpkg.com/osmtogeojson@3.0.0-beta.4/osmtogeojson.js" type="text/javascript" async></script>
+    <script src="https://unpkg.com/osmtogeojson@3.0.0-beta.4/osmtogeojson.js" type="text/javascript" ></script>
 
     <!-- https://forkaweso.me/Fork-Awesome/icons/ -->
     <link href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css"
           rel="stylesheet" integrity="sha256-XoaMnoYC5TH6/+ihMEnospgm0J1PM/nioxbOUdnM8HY=" crossorigin="anonymous"/>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js" async></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js" ></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css"/>
 
 
-    <script async src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.7/build/dat.gui.min.js" type="text/javascript"></script>
+    <script  src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.7/build/dat.gui.min.js" type="text/javascript"></script>
 
-    <script async src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.18.2/cytoscape.min.js" type="text/javascript"></script>
+    <script  src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.18.2/cytoscape.min.js" type="text/javascript"></script>
+
+    <script src='https://meet.jit.si/external_api.js'></script>
 
     <link rel="stylesheet" href="index.css"/>
 
-    <script src="index.js" type="text/javascript"></script>
     <script src="focus.js" type="text/javascript"></script>
     <script src="layer.js" type="text/javascript"></script>
     <script src="home.js" type="text/javascript"></script>
     <script src="geo.js" type="text/javascript"></script>
-    <script src="shapefile.js" type="text/javascript" async></script>
-    <script src="osm.js" type="text/javascript" async></script>
+    <script src="shapefile.js" type="text/javascript" ></script>
+    <script src="osm.js" type="text/javascript" ></script>
+    <script src="comm.js" type="text/javascript" ></script>
 
 
     <!-- https://packery.metafizzy.co/ -->
@@ -76,7 +78,19 @@
     <div id="menu">
         <div id="side_toggle" title="add" class="buttonlike">X</div>
         <div id="addmenu_toggle" title="add" class="buttonlike">+</div>
-        <div id="remembermenu_toggle" title="remember" class="buttonlike">s</div>
+<!--        <div id="remembermenu_toggle" title="remember" class="buttonlike">s</div>-->
+        <div title="map" class="buttonlike">
+            <i class="fa fa-map-marker"></i>
+        </div>
+        <div title="time" class="buttonlike">
+            <i class="fa fa-calendar-check-o"></i>
+        </div>
+        <div title="graph" class="buttonlike">
+            <i class="fa fa-cubes"></i>
+        </div>
+        <div title="comm" class="buttonlike">
+            <i class="fa fa-comment"></i>
+        </div>
     </div>
     <div id="active">
         <div id="layers">
@@ -87,6 +101,66 @@
 <!--        </div>-->
     </div>
 </div>
+<script>
+    "use strict";   window.addEventListener('load', (e) => {
 
+        //console.log(WorldWind.configuration);
+        WorldWind.configuration.gpuCacheSize = 1e9; // 1gb
+        WorldWind.Logger.setLoggingLevel(WorldWind.Logger.LEVEL_WARNING);
+
+
+        const w = new WorldWind.WorldWindow("map");
+        //console.log(w);
+        //w.deepPicking = true;
+        w.camera.fieldOfView =
+            //15;
+            //25;
+            40;
+        //60;
+
+        const f = new Focus(w);
+        //TODO w.clearLayers()
+        f.addLayer(new HomeLayer());
+        f.addLayer(new GeoLayer("Atmosphere", new WorldWind.AtmosphereLayer()).disable());
+        f.addLayer(new GeoLayer("View Controls", new WorldWind.ViewControlsLayer(w)).disable());
+        //view.addLayer(new WorldWind.CompassLayer());
+        //view.addLayer(new WorldWind.CoordinatesDisplayLayer(wwd));
+
+
+        f.addLayer(new ShapefileLayer("Countries", "https://worldwind.arc.nasa.gov/web/examples/data/shapefiles/naturalearth" +
+            "/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp").disable());
+        f.addLayer(new ShapefileLayer("Cities", "https://worldwind.arc.nasa.gov/web/examples/data/shapefiles/naturalearth" +
+            "/ne_50m_populated_places_simple/ne_50m_populated_places_simple.shp").disable());
+
+        f.addLayer(new GeoLayer("OSM Map", new WorldWind.OpenStreetMapImageLayer())/*.opacity(0.5)*/);
+        f.addLayer(new GeoLayer("Satellite", new WorldWind.BingAerialWithLabelsLayer()).disable());
+        //f.addLayer(new WWLayer("BMGNOne", new WorldWind.BMNGOneImageLayer()).disable());
+
+        const pos = f.position();
+        //console.log(pos);
+        const osm = new OSMNodes(f);
+        f.addLayer(osm);
+
+        /*DEPRECATED:*/ osm._update(
+            '(way<bbox>; node<bbox>;);'
+            //'(way[highway]<bbox>; relation<bbox>; node<bbox>;);'
+            , pos.latitude, pos.longitude, /*0.007*/ 0.003)
+
+
+        $("#side_toggle").click(() => {
+            const bc = document.body.classList;
+            if (bc.contains('sideExpanded'))
+                bc.remove('sideExpanded');
+            else
+                bc.add('sideExpanded');
+        });
+        $("#addmenu_toggle").click(() => {
+            $("#addmenu").toggle(/*"slow"*/);
+        });
+
+        comm();
+
+    }, false);
+</script>
 </body>
 </html>
