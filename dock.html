@@ -69,27 +69,36 @@
             content: [{
                 type: 'row',
                 content: [{
-                    type: 'component',
-                    componentName: 'testComponent',
-                    componentState: {label: 'A'}
+                    // type: 'component', componentName: 'testComponent', componentState: {label: 'A'}
+                    componentName: 'focus', type: 'component'
                 }, {
                     type: 'column',
                     content: [{
-                        type: 'component',
-                        componentName: 'testComponent',
-                        componentState: {label: 'B'}
+                        componentName: 'map', type: 'component'
                     }, {
-                        type: 'component',
-                        componentName: 'testComponent',
-                        componentState: {label: 'C'}
+                        componentName: 'comm', type: 'component'
                     }]
                 }]
             }]
         };
+
+
+
         const l = new GoldenLayout(config, $('body'));
-        l.registerComponent('testComponent', function(container, state)  {
-            container.getElement().html('<h2>' + state.label + '</h2>');
+        // l.registerComponent('testComponent', function(container, state)  {
+        //     container.getElement().html('<h2>' + state.label + '</h2>');
+        // });
+        l.registerComponent('focus', function(container, state)  {
+            container.getElement().html('<h1>focus</h1>');
         });
+        l.registerComponent('map', function(container, state)  {
+            container.getElement().html('<h1>map</h1>');
+        });
+        l.registerComponent('comm', function(container, state)  {
+            //$(container.getElement()).append(comm());
+            comm($(container.getElement()));
+        });
+
         l.init();
     });
 </script>

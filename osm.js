@@ -146,6 +146,12 @@ class OSMNodes extends GeoLayer {
         this.focus.link('sidewalk', 'way');
         this.focus.link('steps', 'way');
 
+        this.focus.link('oneway', 'way');
+        this.focus.link('maxspeed', 'way');
+        this.focus.link('direction', 'way');
+        this.focus.link('lanes', 'way');
+        this.focus.link('footway', 'way');
+
 
         const X = pp.id;
         _.forEach(pp, (value, key) => {

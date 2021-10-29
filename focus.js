@@ -110,8 +110,9 @@ class Focus {
 
     /** spreading activation iteration */
     _spread() {
-        const inRate = 0.1;
-        const outRate = 0.2;
+
+        const inRate = 0.2, outRate = 0.4;
+
         this.attn.nodes().forEach(x => {
            const g = this.goal(x);
            if (Math.abs(g) < this.GOAL_EPSILON) return;
@@ -119,13 +120,15 @@ class Focus {
            const I = x.indegree(), O = x.outdegree();
            if (I > 0) {
                //TODO double-buffer
-               x.incomers().nodes().forEach(i => {
-                   this.goalAdd(i, g * inRate / I); //TODO goalLerp
+               x.incomers().nodes().forEach(y => {
+                   if (y.data('specified')) return; //dont modify, set by user
+                   this.goalAdd(y, g * inRate); //TODO goalLerp
                });
            }
            if (O > 0) {
-               x.outgoers().nodes().forEach(o => {
-                   this.goalAdd(o, g * outRate / O); //TODO goalLerp
+               x.outgoers().nodes().forEach(y => {
+                   if (y.data('specified')) return; //dont modify, set by user
+                   this.goalAdd(y, g * outRate); //TODO goalLerp
                });
            }
         });
@@ -134,9 +137,11 @@ class Focus {
             if (icon) {
                 const gx = this.goal(x);
                 const _green = Math.max(gx, 0);
-                const green = parseInt(_green * 256);
                 const _red = Math.max(-gx, 0);
-                const red = parseInt(_red * 256);
+
+                const iconColorIntensity = 0.5;
+                const green = parseInt(_green * 256 * iconColorIntensity);
+                const red = parseInt(_red * 256 * iconColorIntensity);
                 const blue = 0;
                 icon.css('background-color', 'rgba(' + red + ',' + green + ',' + blue + ', 1)');
 
@@ -205,14 +210,30 @@ class Focus {
         const ctl = $('<div>');
         x.data('icon', icon);
 
+        const clearButton = $('<button>').text('x').click(()=>{
+            if (x.data('specified')) {
+                x.data('specified', false); //TODO removeData
+                //TODO disable 'x'
+                this.spread();
+                clearButton.hide();
+            }
+        });
+        clearButton.hide();
+
         ctl.append(
             $('<button>').text('+').click(()=>{
+                x.data('specified', true);
                 this.goalAdd(x, +0.25, true);
+                clearButton.show();
             })
         ).append(
             $('<button>').text('-').click(()=>{
+                x.data('specified', true);
                 this.goalAdd(x, -0.25, true);
+                clearButton.show();
             })
+        ).append(
+            clearButton
         );
         icon.prepend(ctl);
 
