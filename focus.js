@@ -4,17 +4,47 @@ class Focus {
         this.layers = [];
         this.view = view;
 
-        const attn = cytoscape({headless: true});
+        const attn = cytoscape({
+            //headless:true
+            container: document.getElementById('overlay'),
+            style: [ // the stylesheet for the graph
+                {
+                    selector: 'node',
+                    style: {
+                        'background-color': '#666',
+                        'label': 'data(id)',
+                        'width': (x)=>{
+                             return 10*(1+Math.log(1 + x.degree()/10));
+                         },
+                         'height': (x)=>{
+                             return 10*(1+Math.log(1 + x.degree()/10));
+                         }
+                    }
+                }
+
+                // {
+                //     selector: 'edge',
+                //     style: {
+                //         'width': 3,
+                //         'line-color': '#ccc',
+                //         'target-arrow-color': '#ccc',
+                //         'target-arrow-shape': 'triangle',
+                //         'curve-style': 'bezier'
+                //     }
+                // }
+            ],
+
+        });
         attn.attnUpdated = _.debounce(()=> {
 
             const tgt = $('#interests');
             tgt.html('');
 
             const a =
+                attn.$()
                 // attn.$().filter(e => {
                 //     return !e.isNode() || !e.data('instance');
                 // }).kruskal()
-                attn.$()
             ;
 
             const rank = a //attn.$()
@@ -33,7 +63,21 @@ class Focus {
                 });
 
             });
-        }, 200);
+
+            a/*attn*/.nodes().forEach(x => {
+                //console.log(x, x.outdegree());
+               if (x.outdegree()===0)
+                   x.style('display', 'none');
+            });
+
+            //console.log(attn);
+            //TODO stop any previous layout?
+            attn.layout({
+                //name: 'grid'
+                name: 'breadthfirst', circle: 'false'/*, nodeDimensionsIncludeLabels: true*/
+            }).run();
+
+        }, 1000);
         this.attn = attn;
 
         this.GOAL_EPSILON = 0.01;

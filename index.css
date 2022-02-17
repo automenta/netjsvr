@@ -15,7 +15,12 @@ body {
     position: fixed;
     /*transition: 0.25s;*/
 }
-
+#overlay {
+    /*height: 100%;*/
+    /*width: 100%;*/
+    /*position: fixed;*/
+    display: block;
+}
 .content {
     position: fixed;
     margin: 0;
