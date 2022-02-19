@@ -105,7 +105,12 @@ class OSMNodes extends GeoLayer {
             headers: {
                 "Accepts": "text/plain; charset=utf-8",
                 "Cache-Control": 'max-age=3600'//<seconds> //TODO this may not matter
-            }
+            },
+            localCache: true,        // Required. Either a boolean, in which case localStorage will be used, or
+            // an object that implements the Storage interface.
+
+            cacheTTL: 1           // Optional. In hours. Can be used with float to indicate part of an hour, e.g. 0.5.
+            //cacheKey: 'post',      // optional.
         }).done(X => this._load(X));
     }
 

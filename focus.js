@@ -14,10 +14,10 @@ class Focus {
                         'background-color': '#666',
                         'label': 'data(id)',
                         'width': (x)=>{
-                             return 10*(1+Math.log(1 + x.degree()/10));
+                             return 10*(1+Math.log(1 + x.outdegree()/1));
                          },
                          'height': (x)=>{
-                             return 10*(1+Math.log(1 + x.degree()/10));
+                             return 10*(1+Math.log(1 + x.outdegree()/1));
                          }
                     }
                 }
@@ -66,7 +66,9 @@ class Focus {
 
             a/*attn*/.nodes().forEach(x => {
                 //console.log(x, x.outdegree());
-               if (x.outdegree()===0)
+                const d = x.outdegree();
+                //if (d===0)
+                if (d <= 1)
                    x.style('display', 'none');
             });
 
@@ -74,8 +76,14 @@ class Focus {
             //TODO stop any previous layout?
             attn.layout({
                 //name: 'grid'
-                name: 'breadthfirst', circle: 'false'/*, nodeDimensionsIncludeLabels: true*/
+                //name: 'cose', numIter: 50,  coolingFactor: 0.999, animate: false
+                name: 'breadthfirst', circle: true/*, nodeDimensionsIncludeLabels: true*/
             }).run();
+            // attn.layout({
+            //     //name: 'grid'
+            //     name: 'cose', numIter: 50,  coolingFactor: 0.999, animate: false, randomize:false
+            //     //name: 'breadthfirst', circle: true/*, nodeDimensionsIncludeLabels: true*/
+            // }).run();
 
         }, 1000);
         this.attn = attn;
