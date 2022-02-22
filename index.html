@@ -28,6 +28,8 @@
     <script src="https://cdn.jsdelivr.net/npm/dat.gui/build/dat.gui.min.js" type="text/javascript"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.20.0/cytoscape.min.js" type="text/javascript"></script>
+<!--    <script src="https://cdn.skypack.dev/cytoscape-dom-node"></script>-->
+    <script src="cytoscape-dom-node.js"></script>
 
     <script src='https://meet.jit.si/external_api.js'></script>
 
@@ -95,15 +97,16 @@
         </div>
     </div>
     <div id="active">
+
         <div id="layers">
         </div>
         <div id="interests">
+            <div id="overlay" class="content"></div>
         </div>
 <!--        <div id="options">-->
 <!--        </div>-->
     </div>
 </div>
-<div id="overlay" class="content"></div>
 <script>
     "use strict";   window.addEventListener('load', (e) => {
 
@@ -128,7 +131,6 @@
         f.addLayer(new GeoLayer("View Controls", new WorldWind.ViewControlsLayer(w)).disable());
         //view.addLayer(new WorldWind.CompassLayer());
         //view.addLayer(new WorldWind.CoordinatesDisplayLayer(wwd));
-
 
         f.addLayer(new ShapefileLayer("Countries", "https://worldwind.arc.nasa.gov/web/examples/data/shapefiles/naturalearth" +
             "/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp").disable());

@@ -16,10 +16,10 @@ body {
     /*transition: 0.25s;*/
 }
 #overlay {
-    /*height: 100%;*/
-    /*width: 100%;*/
-    /*position: fixed;*/
-    display: block;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    background-color: #ffcf76;
 }
 .content {
     position: fixed;

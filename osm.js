@@ -82,7 +82,6 @@ class OSMNodes extends GeoLayer {
         if (!lonHalf)
             lonHalf = latHalf; //TODO based on latitude
 
-
         const latMin = lat - latHalf, latMax = lat + latHalf;
         const lonMin = lon - lonHalf, lonMax = lon + lonHalf;
 
@@ -91,15 +90,16 @@ class OSMNodes extends GeoLayer {
             _.round(latMin, 3), _.round(lonMin, 3),
             _.round(latMax, 3), _.round(lonMax, 3));
 
+        var host =
+            'z.overpass-api.de';
+            //'lz4.overpass-api.de'
+            //'overpass.openstreetmap.fr'
+            //'overpass-api.de'
+
         $.ajax({
-            url:
-                'https://z.overpass-api.de/api/interpreter'
-                //'https://lz4.overpass-api.de/api/interpreter'
-                //'https://overpass.openstreetmap.fr/api/interpreter'
-                //'https://overpass-api.de/api/interpreter'
-                + '?data=' + encodeURIComponent(
-                    '[out:json];\n' + query.replaceAll('<bbox>', bbox) + '\nout geom' + bbox + ';'
-                ),
+            url: 'https://' + host + '/api/interpreter' + '?data=' + encodeURIComponent(
+             '[out:json];\n' + query.replaceAll('<bbox>', bbox) + '\nout geom' + bbox + ';'
+            ),
             contentType: 'application/json',
             dataType: 'json',
             headers: {

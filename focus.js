@@ -11,8 +11,9 @@ class Focus {
                 {
                     selector: 'node',
                     style: {
-                        'background-color': '#666',
-                        'label': 'data(id)',
+                        //'label': 'data(id)',
+                        //'background-color': '#666',
+                        'background-opacity': 0,
                         'width': (x)=>{
                              return 10*(1+Math.log(1 + x.outdegree()/1));
                          },
@@ -37,48 +38,58 @@ class Focus {
         });
         attn.attnUpdated = _.debounce(()=> {
 
-            const tgt = $('#interests');
-            tgt.html('');
-
             const a =
                 attn.$()
                 // attn.$().filter(e => {
                 //     return !e.isNode() || !e.data('instance');
                 // }).kruskal()
             ;
+            {
+                // const tgt = $('#interests');
+                // tgt.html('');
+                //
 
-            const rank = a //attn.$()
-                //pageRank().rank;
-                .degreeCentralityNormalized().degree;
-            //closenessCentralityNormalized().closeness;
+                //
+                // const rank = a //attn.$()
+                //     //pageRank().rank;
+                //     .degreeCentralityNormalized().degree;
+                // //closenessCentralityNormalized().closeness;
+                //
+                // a/*attn*/.nodes().roots().sort((a,b)=>rank(b)-rank(a)).forEach(x=>{
+                //     //if (x.data('instance')) return;
+                //     const icon = this.interestIcon(x, rank, attn);
+                //     tgt.append(icon);
+                //
+                //     //console.log(x.outgoers());
+                //     x.outgoers().nodes().forEach(xe => {
+                //         icon.append(this.interestIcon(xe, rank, attn));
+                //     });
+                //
+                // });
 
-            a/*attn*/.nodes().roots().sort((a,b)=>rank(b)-rank(a)).forEach(x=>{
-                //if (x.data('instance')) return;
-                const icon = this.interestIcon(x, rank, attn);
-                tgt.append(icon);
+            }
 
-                //console.log(x.outgoers());
-                x.outgoers().nodes().forEach(xe => {
-                    icon.append(this.interestIcon(xe, rank, attn));
-                });
-
-            });
+            attn.domNode();
 
             a/*attn*/.nodes().forEach(x => {
                 //console.log(x, x.outdegree());
                 const d = x.outdegree();
                 //if (d===0)
                 if (d <= 1)
-                   x.style('display', 'none');
+                    x.style('display', 'none');
+
             });
+
 
             //console.log(attn);
             //TODO stop any previous layout?
-            attn.layout({
-                //name: 'grid'
-                //name: 'cose', numIter: 50,  coolingFactor: 0.999, animate: false
-                name: 'breadthfirst', circle: true/*, nodeDimensionsIncludeLabels: true*/
-            }).run();
+            try {
+                attn.layout({
+                    //name: 'grid'
+                    //name: 'cose', numIter: 50,  coolingFactor: 0.999, animate: false
+                    name: 'breadthfirst', circle: true/*, nodeDimensionsIncludeLabels: true*/
+                }).run();
+            } catch (e) {  }
             // attn.layout({
             //     //name: 'grid'
             //     name: 'cose', numIter: 50,  coolingFactor: 0.999, animate: false, randomize:false
@@ -378,9 +389,19 @@ class Focus {
         //     return; //ignore duplicate
 
         //console.log(x, y);
+        let div = document.createElement("button");
+        div.innerHTML = y;
+        //$(div).append($('<a>').text(id));
+        //$(div).click(()=>{console.log(this);});
+
+        //div.classList = ['my-cy-node'];
+        //div.style.margin = '10px';
+        div.style.width = `${Math.floor(Math.random() * 40) + 60}px`;
+        div.style.height = `${Math.floor(Math.random() * 30) + 50}px`;
+
         this.attn.add([
             { group: 'nodes', data: { id: x } },
-            { group: 'nodes', data: { id: y } },
+            { group: 'nodes', data: { id: y, dom:div } },
             { group: 'edges', data: { /*id: x + '__' + y,*/ source: y, target: x } }
         ]);
 
