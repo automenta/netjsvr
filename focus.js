@@ -75,8 +75,11 @@ class Focus {
                 //console.log(x, x.outdegree());
                 const d = x.outdegree();
                 //if (d===0)
-                if (d <= 1)
+                if (d <= 1) {
                     x.style('display', 'none');
+                    $(x.data('dom')).remove();
+
+                }
 
             });
 
@@ -86,8 +89,8 @@ class Focus {
             try {
                 attn.layout({
                     //name: 'grid'
-                    //name: 'cose', numIter: 50,  coolingFactor: 0.999, animate: false
-                    name: 'breadthfirst', circle: true/*, nodeDimensionsIncludeLabels: true*/
+                    //name: 'cose'//, numIter: 50,  coolingFactor: 0.999, animate: false
+                    name: 'breadthfirst', circle: true, nodeDimensionsIncludeLabels: true
                 }).run();
             } catch (e) {  }
             // attn.layout({
@@ -196,8 +199,9 @@ class Focus {
            }
         });
         this.attn.nodes().forEach(x => {
-            const icon = x.data('icon');
+            var icon = x.data('icon');
             if (icon) {
+                icon = $(icon);
                 const gx = this.goal(x);
                 const _green = Math.max(gx, 0);
                 const _red = Math.max(-gx, 0);
@@ -241,7 +245,7 @@ class Focus {
 
     goal(x) {
         if (typeof(x)==='string')
-            x = this.attn.getElementById(x);
+            x = this.attn.$id(x);
         if (x === undefined) return 0;
         const y = x.data('goal');
         if (y === undefined) return 0;
@@ -263,19 +267,20 @@ class Focus {
             this.spread();
     }
 
-    interestIcon(x, rank, attn) {
-        const rx = rank(x);
-        const xid = x.id();
-        const icon = $('<div>').text(xid)
+    interestIcon(x) {
+        //const rx = rank(x);
+        const icon = $('<div>').text(x)
             .addClass('interestIcon').addClass('buttonlike')
-            .css('font-size', `${Math.min(150, 100 * Math.log(1 + rx * 1E3))}%`);
+            //.css('font-size', `${Math.min(150, 100 * Math.log(1 + rx * 1E3))}%`);
 
         const ctl = $('<div>');
-        x.data('icon', icon);
+        //x.data('icon', icon);
 
-        const clearButton = $('<button>').text('x').click(()=>{
-            if (x.data('specified')) {
-                x.data('specified', false); //TODO removeData
+        const clearButton = $('<button>').text('x');
+        clearButton.click(()=>{
+            const X = this.attn.$id(x);
+            if (X.data('specified')) {
+                X.data('specified', false); //TODO removeData
                 //TODO disable 'x'
                 this.spread();
                 clearButton.hide();
@@ -285,14 +290,16 @@ class Focus {
 
         ctl.append(
             $('<button>').text('+').click(()=>{
-                x.data('specified', true);
-                this.goalAdd(x, +0.25, true);
+                const X = this.attn.$id(x);
+                X.data('specified', true);
+                this.goalAdd(X, +0.25, true);
                 clearButton.show();
             })
         ).append(
             $('<button>').text('-').click(()=>{
-                x.data('specified', true);
-                this.goalAdd(x, -0.25, true);
+                const X = this.attn.$id(x);
+                X.data('specified', true);
+                this.goalAdd(X, -0.25, true);
                 clearButton.show();
             })
         ).append(
@@ -358,8 +365,8 @@ class Focus {
         */
 
 
-
-        return $('<div>').addClass('interestGroup').append(icon);
+        return icon;
+        //return $('<div>').addClass('interestGroup').append(icon);
     }
 
     run() {
@@ -389,24 +396,47 @@ class Focus {
         //     return; //ignore duplicate
 
         //console.log(x, y);
-        let div = document.createElement("button");
-        div.innerHTML = y;
+        this.addInterest(y);
+        this.addInterest(x);
+
+        //TODO add edges (and div's) only if not already present
+
+
+        this.attn.add([
+            { group: 'edges', data: { /*id: x + '__' + y,*/ source: y, target: x } }
+        ]);
+
+        //TODO only if graph actually changed
+        this.attn.attnUpdated();
+
+    }
+
+    addInterest(x) {
+        if (this.attn.$id(x).length)
+            return; //already added
+
+        const div = this.nodeDiv(x);
+
+        this.attn.add([{ group: 'nodes', data: { id: x, dom:div } } ]);
+
+        this.attn.$id(x).data('icon', div);
+    }
+
+    nodeDiv(x) {
+        const div = document.createElement("div");
+        $(div).append(x);
+        //$(div).append($('<button>').text('+'), $('<button>').text('-'));
+        $(div).append(this.interestIcon(x, ()=>1));
+
         //$(div).append($('<a>').text(id));
         //$(div).click(()=>{console.log(this);});
 
         //div.classList = ['my-cy-node'];
+        //div.style.width = `${Math.floor(Math.random() * 40) + 60}px`;
+        //div.style.height = `${Math.floor(Math.random() * 30) + 50}px`;
+        //div.style.opacity = 0.5;
         //div.style.margin = '10px';
-        div.style.width = `${Math.floor(Math.random() * 40) + 60}px`;
-        div.style.height = `${Math.floor(Math.random() * 30) + 50}px`;
-
-        this.attn.add([
-            { group: 'nodes', data: { id: x } },
-            { group: 'nodes', data: { id: y, dom:div } },
-            { group: 'edges', data: { /*id: x + '__' + y,*/ source: y, target: x } }
-        ]);
-
-        this.attn.attnUpdated();
-
+        return div;
     }
 
     addLayer(layer) {
