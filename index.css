@@ -32,15 +32,15 @@ body:not(.sideExpanded) .content {
 }
 
 body.sideExpanded .content {
-    right: 0;
-    width: 75%;
+    width: 50%;
     height: 100%;
+    right: 0;
 }
 
 body.sideExpanded .side {
-    position: fixed;
-    width: 25%;
+    width: 50%;
     height: 100%;
+    position: fixed;
     margin: 0;
     padding: 0;
 }
@@ -148,10 +148,16 @@ body:not(.sideExpanded) .side #active {
     border-color:orange;
 }
 
+.modal {
+    position: fixed;
+    width: 80%;
+    height: 80%;
+    left: 10%;
+    top: 10%
+}
+
 #menu {
-    position: absolute;
-    left: 100%;
-    height: 100%;
+
 }
 
 body:not(.sideExpanded) * #menu {
@@ -174,13 +180,34 @@ body:not(.sideExpanded) * #menu {
     font-size: 150%;
 }
 
-#menu .buttonlike {
+#menu {
+    width: 100%;
+}
+#menu span {
+    font-size: 200%;
+    display: inline;
+    padding: 0.25em;
+    cursor: crosshair;
+}
+.menuActive, #menu span:hover {
+    background-color: blue;
+}
+
+#menu div {
+    position: absolute;
+    margin: 1em;
+    padding: 1em;
+    z-index: 5;
+    background-color: rgba(0,0,0,0.5);
+}
+
+#menu2 .buttonlike {
     background-color: rgba(0,0,0,0.5);
     font-size: 200%;
     text-align: center;
     /*margin-bottom: 0.5em;*/
 }
-#menu .buttonlike:hover {
+#menu2 .buttonlike:hover {
     transform: scale(1.5);
 }
 

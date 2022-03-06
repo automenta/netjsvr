@@ -31,6 +31,11 @@ class Layer {
         }
     }
 
+    /** called when position is updated */
+    position(pos) {
+
+    }
+
     get enabled() {
         return this._enabled;
     }

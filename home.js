@@ -34,14 +34,16 @@ class HomeLayer extends Layer {
         d.append($('<div>').text('Set').addClass('buttonlike').click(() => {
             this.pos = _.clone(focus.view.camera.position);
             this.save();
+            this.go(focus);
         }));
         //load(focus.home);
         return d;
     }
 
     go(focus) {
-        if (this.pos) {
-            focus.position(this.pos.latitude, this.pos.longitude, this.pos.altitude);
+        const pos = this.pos;
+        if (pos) {
+            focus.position(pos.latitude, pos.longitude, pos.altitude);
             focus.view.redraw();
         }
     }

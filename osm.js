@@ -74,6 +74,14 @@ class OSMNodes extends GeoLayer {
         };
     }
 
+    position(pos) {
+        /*DEPRECATED:*/
+        this._update(
+            '(way<bbox>; node<bbox>;);'
+            //'(way[highway]<bbox>; relation<bbox>; node<bbox>;);'
+            , pos.latitude, pos.longitude, /*0.007*/ 0.002)
+    }
+
     update(focus) {
         //TODO
     }
