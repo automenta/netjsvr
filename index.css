@@ -22,9 +22,11 @@ body {
     background-color: #ffcf76;
 }
 .content {
-    position: fixed;
+    position: absolute;
     margin: 0;
     padding: 0;
+    width: 100%;
+    height: 100%;
 }
 body:not(.sideExpanded) .content {
     width: 100%;

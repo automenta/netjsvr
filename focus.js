@@ -1,8 +1,8 @@
 class Focus {
 
-    constructor(view) {
+    constructor() {
         this.layers = [];
-        this.view = view;
+        /* DEPRECATED */ this.view = null;
 
         const attn = cytoscape({
             //headless:true
@@ -99,67 +99,8 @@ class Focus {
             this._update();
         }, 100);
 
-        let anim = null;
 
-        // The common pick-handling function.
-        // Listen for mouse moves and highlight the placemarks that the cursor rolls over.
-        // Listen for taps on mobile devices and highlight the placemarks that the user taps.
-        let finger = o => {
-            //console.log(o);
-            if (o.buttons !== 1)
-                return;
 
-            //_.forEach(this.touched, t => t.highlighted = false);
-            //const touched = this.touched = [];
-            let picked;
-            try {
-                const px = o.clientX, py = o.clientY;
-                picked = view.pick(view.canvasCoordinates(px, py));
-            } catch (e) {
-                console.log(e);
-                return;
-            }
-
-            const picks = picked.objects;
-            //console.log(picks);
-
-            if (picks.length > 0) {
-                const x = picks[picks.length - 1];
-                //_.forEach(picks, x => {
-                if (x.isTerrain) {
-                    //toastr.info("terrain " + x.position);
-                } else {
-                    if (anim === null) {
-
-                        const tgt = new WorldWind.Position().copy(x.userObject.referencePosition);
-                        tgt.altitude += 100;
-
-                        anim = new WorldWind.GoToAnimator(view);
-                        anim.travelTime = 1000;
-                        anim.goTo(tgt, () => {
-                            anim = null;
-                        });
-                    }
-
-                    // const concept = x.userObject.userProperties.concept || x.userObject.displayName;
-                    // toastr.info(JSON.stringify(concept), {
-                    //     closeButton: true
-                    // });
-                }
-            }
-            // _.forEach(picks, p => {
-            //     const o = p.userObject;
-            //     o.highlighted = true;
-            //     touched.push(o);
-            // })
-            //view.redraw(); // redraw to make the highlighting changes take effect on the screen
-
-        };
-        finger = _.debounce(finger, 100);
-
-        //var tapRecognizer = new WorldWind.TapRecognizer(view, finger);
-        //view.addEventListener("mousemove", finger);
-        view.addEventListener("pointerdown", finger);
 
         const updatePeriodMS = 200;
         this.running = setInterval(this.run, updatePeriodMS);
@@ -411,7 +352,7 @@ class Focus {
     }
 
     position(lat, lon, alt) {
-        const pos = this.cam().position;
+        const pos = this.view.pos();
         if (lat && lon && alt) {
             // if (pos.latitude!==lat || pos.longitude!==lon || pos.altitude!==alt) {
                 //cam.tilt = 45;
@@ -425,7 +366,7 @@ class Focus {
     }
 
     cam() {
-        return this.view.camera;
+        return this.view.w.camera; //HACK
     }
 
     link(x, y, cfg) {

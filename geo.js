@@ -74,7 +74,7 @@ class GeoLayer extends Layer {
 
         gui.add(person, 'alive');
 
-        const folder1 = gui.addFolder('Flow Field');
+        //const folder1 = gui.addFolder('Flow Field');
         const palette = {
             color1: '#FF0000', // CSS string
             color2: [0, 128, 255], // RGB array

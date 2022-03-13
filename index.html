@@ -41,7 +41,12 @@
     <link rel="stylesheet" href="index.css"/>
 
     <script src="focus.js" type="text/javascript"></script>
+
+    <script src="view.js" type="text/javascript"></script>
+    <script src="view.worldwind.js" type="text/javascript"></script>
+
     <script src="layer.js" type="text/javascript"></script>
+
     <script src="home.js" type="text/javascript"></script>
     <script src="geo.js" type="text/javascript"></script>
     <script src="shapefile.js" type="text/javascript"></script>
@@ -66,10 +71,6 @@
 
 <div id="menu"></div>
 
-<canvas id="map" class="content">HTML5 canvas unsupported</canvas>
-
-
-
 <div id="addmenu" style="display:none">
     <div id="mode_menu">
         <button title="Clear"><i class="fa fa-times" aria-hidden="true"></i></button>
@@ -86,14 +87,10 @@
 </div>
 
 <div id="root" class="side">
-
     <div id="active">
-
         <div id="interests">
             <div id="overlay" class="content"></div>
         </div>
-        <!--        <div id="options">-->
-        <!--        </div>-->
     </div>
 </div>
 
@@ -122,26 +119,15 @@
     "use strict";
     window.addEventListener('load', (e) => {
 
-        //console.log(WorldWind.configuration);
-        WorldWind.configuration.gpuCacheSize = 1e9; // 1gb
-        WorldWind.Logger.setLoggingLevel(WorldWind.Logger.LEVEL_WARNING);
 
-        const w = new WorldWind.WorldWindow("map");
 
-        //w.deepPicking = true;
-
-        // w.camera.fieldOfView =
-        //     //15;
-        //     //25;
-        //     40;
-        //      //60;
-
-        const f = new Focus(w);
+        const f = new Focus();
+        const fv = new WorldWindView().start($('body'), f);
 
         //TODO w.clearLayers()
         f.addLayer(new HomeLayer());
         f.addLayer(new GeoLayer("Atmosphere", new WorldWind.AtmosphereLayer()).disable());
-        f.addLayer(new GeoLayer("View Controls", new WorldWind.ViewControlsLayer(w)).disable());
+        //f.addLayer(new GeoLayer("View Controls", new WorldWind.ViewControlsLayer(w)).disable());
         //view.addLayer(new WorldWind.CompassLayer());
         //view.addLayer(new WorldWind.CoordinatesDisplayLayer(wwd));
 
@@ -154,23 +140,19 @@
         f.addLayer(new GeoLayer("Satellite", new WorldWind.BingAerialWithLabelsLayer()).disable());
         //f.addLayer(new WWLayer("BMGNOne", new WorldWind.BMNGOneImageLayer()).disable());
 
-        //console.log(pos);
-        const osm = new OSMNodes(f);
-        f.addLayer(osm);
+        f.addLayer(new OSMNodes(f));
 
 
-
-
-        $("#side_toggle").click(() => {
-            const bc = document.body.classList;
-            if (bc.contains('sideExpanded'))
-                bc.remove('sideExpanded');
-            else
-                bc.add('sideExpanded');
-        });
-        $("#addmenu_toggle").click(() => {
-            $("#addmenu").toggle(/*"slow"*/);
-        });
+        // $("#side_toggle").click(() => {
+        //     const bc = document.body.classList;
+        //     if (bc.contains('sideExpanded'))
+        //         bc.remove('sideExpanded');
+        //     else
+        //         bc.add('sideExpanded');
+        // });
+        // $("#addmenu_toggle").click(() => {
+        //     $("#addmenu").toggle(/*"slow"*/);
+        // });
 
         var m = new Menu("menu");
         m.addMenu('Shit', ()=>{

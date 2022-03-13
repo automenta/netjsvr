@@ -1,12 +1,11 @@
 class Menu {
+    
     constructor(elementID) {
         this.ele = $("#" + elementID);
         this.activeIcon = null;
         this.active = null;
-
-
-
     }
+
     addMenu(icon, content) {
         const i = $('<span>').text(icon);
         i.click(()=>{
