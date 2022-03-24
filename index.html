@@ -47,10 +47,11 @@
 
     <script src="layer.js" type="text/javascript"></script>
 
-    <script src="home.js" type="text/javascript"></script>
-    <script src="geo.js" type="text/javascript"></script>
-    <script src="shapefile.js" type="text/javascript"></script>
-    <script src="osm.js" type="text/javascript"></script>
+    <script src="layer.home.js" type="text/javascript"></script>
+    <script src="layer.geo.js" type="text/javascript"></script>
+    <script src="layer.shapefile.js" type="text/javascript"></script>
+    <script src="layer.osm.js" type="text/javascript"></script>
+
     <script src="comm.js" type="text/javascript"></script>
 
     <script src="menu.js" type="text/javascript"></script>
@@ -67,7 +68,7 @@
 
 </head>
 
-<body class="sideExpanded">
+<body>
 
 <div id="menu"></div>
 
@@ -86,13 +87,6 @@
     </div>
 </div>
 
-<div id="root" class="side">
-    <div id="active">
-        <div id="interests">
-            <div id="overlay" class="content"></div>
-        </div>
-    </div>
-</div>
 
 <div id="menu2" class="modal" style="display:none">
     <div id="layers">
@@ -155,24 +149,16 @@
         // });
 
         var m = new Menu("menu");
-        m.addMenu('Shit', ()=>{
-            return $('<button>x</button>');
-        });
-        m.addMenu('Play', ()=>{
-            return $('<button>x</button>');
-        });
-        m.addMenu('Fuck', ()=>{
-            return $('<button>x</button>');
-        });
-        m.addMenu('Sleep', ()=>{
-            return $('<button>x</button>');
-        });
-        m.addMenu('Eat', ()=>{
-            return $('<button>x</button>');
-        });
-        m.addMenu('Options', ()=>{
-            return $('<button>x</button>');
-        });
+
+        setTimeout(()=>{ f.run(); f.updateMenu(m); }, 1000);
+
+
+        // _.each(['Shit', 'Play', 'Fuck', 'Sleep', 'Eat', 'Options'], (s)=> {
+        //     m.addMenu(s, () => {
+        //         return $('<button>x</button>');
+        //     });
+        // });
+
 
     }, false);
 </script>

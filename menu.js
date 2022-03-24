@@ -1,4 +1,4 @@
-class Menu {
+class Menu /* extends View */ {
     
     constructor(elementID) {
         this.ele = $("#" + elementID);
@@ -7,14 +7,14 @@ class Menu {
     }
 
     addMenu(icon, content) {
-        const i = $('<span>').text(icon);
+        const i = $('<div>').text(icon);
         i.click(()=>{
             if (this.active) {
                 this.active.remove();
                 this.active = null;
             }
             if (this.activeIcon !== i) {
-                this.ele.append(this.active = $('<div>').append(content()));
+                this.ele.after(this.active = $('<div class="popup">').append(content()));
                 i.addClass('menuActive');
                 this.activeIcon = i;
             } else {

@@ -2,30 +2,29 @@ class Focus {
 
     constructor() {
         this.layers = [];
-        /* DEPRECATED */ this.view = null;
+        /* DEPRECATED */
+        this.view = null;
 
         const attn = cytoscape({
-            //headless:true
+            headless:true
 
-            container: document.getElementById('overlay'),
-            style: [ // the stylesheet for the graph
-                {
-                    selector: 'node',
-                    style: {
-                        //'label': 'data(id)',
-                        //'background-color': '#666',
-                        'background-opacity': 0,
-                        'width': x => {
-                            return 10 * (1 + Math.log(1 + x.outdegree() / 1));
-                        },
-                        'height': x => {
-                            return 10 * (1 + Math.log(1 + x.outdegree() / 1));
-                        }
-                    }
-                }
-            ]
+            // container: document.getElementById('overlay'),
+            // style: [{
+            //     selector: 'node',
+            //     style: {
+            //         //'label': 'data(id)',
+            //         //'background-color': '#666',
+            //         'background-opacity': 0,
+            //         'width': x => {
+            //             return 10 * (1 + Math.log(1 + x.outdegree() / 1));
+            //         },
+            //         'height': x => {
+            //             return 10 * (1 + Math.log(1 + x.outdegree() / 1));
+            //         }
+            //     }
+            // }]
         });
-        attn.domNode(); //TODO remove when headless
+        //if (!headless)  attn.domNode();
 
         attn.attnUpdated = _.debounce(() => {
 
@@ -100,10 +99,8 @@ class Focus {
         }, 100);
 
 
-
-
-        const updatePeriodMS = 200;
-        this.running = setInterval(this.run, updatePeriodMS);
+        //const updatePeriodMS = 200;
+        //this.running = setInterval(this.run, updatePeriodMS);
     }
 
     graphView(elementID) {
@@ -154,7 +151,8 @@ class Focus {
 
                 var v = 0, sum = 0;
 
-                v += this.goal(x) * selfRate;  sum+=selfRate;
+                v += this.goal(x) * selfRate;
+                sum += selfRate;
 
                 const I = x.indegree(), O = x.outdegree();
                 //TODO reverse this
@@ -355,11 +353,11 @@ class Focus {
         const pos = this.view.pos();
         if (lat && lon && alt) {
             // if (pos.latitude!==lat || pos.longitude!==lon || pos.altitude!==alt) {
-                //cam.tilt = 45;
-                pos.latitude = lat;
-                pos.longitude = lon;
-                pos.altitude = alt;
-                this.layers.forEach(l => l.position(pos));
+            //cam.tilt = 45;
+            pos.latitude = lat;
+            pos.longitude = lon;
+            pos.altitude = alt;
+            this.layers.forEach(l => l.position(pos));
             // }
         }
         return pos;
@@ -437,4 +435,23 @@ class Focus {
         layer.stop(this);
     }
 
+    updateMenu(m) {
+        const k = this.attn.elements().kruskal();
+
+        const roots = k.nodes().filter(n => n.indegree()<=0);
+
+        roots.forEach(n => {
+           const id = n.data('id');
+           m.addMenu(id, ()=>{
+               const children = [];
+               n.successors().forEach(s=>{
+                   if (s.outdegree()>1)
+                    children.push(s.data('id'));
+               });
+               console.log(children);
+               return $('<button>' + children + '</button>');
+           });
+        });
+
+    }
 }
