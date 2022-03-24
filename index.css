@@ -193,7 +193,7 @@ body:not(.sideExpanded) * #menu {
     padding: 0.25em;
     cursor: crosshair;
 }
-.menuActive, #menu span:hover {
+.menuActive, #menu div:hover {
     background-color: blue;
 }
 

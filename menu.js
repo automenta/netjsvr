@@ -15,6 +15,8 @@ class Menu /* extends View */ {
             }
             if (this.activeIcon !== i) {
                 this.ele.after(this.active = $('<div class="popup">').append(content()));
+                if (this.activeIcon!=null)
+                    this.activeIcon.removeClass('menuActive');
                 i.addClass('menuActive');
                 this.activeIcon = i;
             } else {

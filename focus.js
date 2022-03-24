@@ -6,7 +6,7 @@ class Focus {
         this.view = null;
 
         const attn = cytoscape({
-            headless:true
+            headless: true
 
             // container: document.getElementById('overlay'),
             // style: [{
@@ -431,26 +431,30 @@ class Focus {
         delete layer.element;
 
         this.layers = _.filter(this.layers, x => x !== layer);
-        //console.log(layer, ' = ? = ', removed); //TODO
         layer.stop(this);
     }
 
     updateMenu(m) {
         const k = this.attn.elements().kruskal();
 
-        const roots = k.nodes().filter(n => n.indegree()<=0);
+        const roots = k.nodes().filter(n => n.indegree() <= 0);
 
         roots.forEach(n => {
-           const id = n.data('id');
-           m.addMenu(id, ()=>{
-               const children = [];
-               n.successors().forEach(s=>{
-                   if (s.outdegree()>1)
-                    children.push(s.data('id'));
-               });
-               console.log(children);
-               return $('<button>' + children + '</button>');
-           });
+            const id = n.data('id');
+            m.addMenu(id, () => {
+                const d = $('<div>');
+
+                d.append(this.interestIcon(id));
+
+                //TODO hierarchical, not flattened:
+                n.successors().forEach(s => {
+                    if (s.outdegree() > 1) {
+                        d.append(this.interestIcon(s.data('id')))
+                    }
+                });
+
+                return d;
+            });
         });
 
     }
