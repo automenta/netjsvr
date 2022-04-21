@@ -182,20 +182,20 @@ body:not(.sideExpanded) * #menu {
     font-size: 150%;
 }
 
-#menu {
-    width: 100%;
-    max-height: 25%;
-    overflow: auto;
-}
-#menu div {
-    font-size: 150%;
-    display: inline-flex;
-    padding: 0.25em;
-    cursor: crosshair;
-}
-.menuActive, #menu div:hover {
-    background-color: blue;
-}
+/*#menu {*/
+/*    width: 100%;*/
+/*    max-height: 25%;*/
+/*    overflow: auto;*/
+/*}*/
+/*#menu div {*/
+/*    font-size: 150%;*/
+/*    display: inline-flex;*/
+/*    padding: 0.25em;*/
+/*    cursor: crosshair;*/
+/*}*/
+/*.menuActive, #menu div:hover {*/
+/*    background-color: blue;*/
+/*}*/
 
 .popup {
     position: absolute;

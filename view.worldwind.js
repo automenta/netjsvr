@@ -77,7 +77,7 @@ class WorldWindView extends View {
             //view.redraw(); // redraw to make the highlighting changes take effect on the screen
 
         };
-        finger = _.debounce(finger, 100);
+        finger = _.throttle(finger, 100);
 
         //var tapRecognizer = new WorldWind.TapRecognizer(view, finger);
         //view.addEventListener("mousemove", finger);

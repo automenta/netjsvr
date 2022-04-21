@@ -26,7 +26,7 @@ class Focus {
         });
         //if (!headless)  attn.domNode();
 
-        attn.attnUpdated = _.debounce(() => {
+        attn.attnUpdated = _.throttle(() => {
 
             const a =
                     attn.$()
@@ -94,7 +94,7 @@ class Focus {
 
         this.GOAL_EPSILON = 0.01;
 
-        this.spread = _.debounce(() => {
+        this.spread = _.throttle(() => {
             this._update();
         }, 100);
 
