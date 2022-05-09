@@ -178,8 +178,8 @@ body:not(.sideExpanded) * #menu {
 }
 
 .interestIcon {
-    padding: 0.25em;
-    font-size: 150%;
+    /*padding: 0.25em;*/
+    /*font-size: 150%;*/
 }
 
 /*#menu {*/
@@ -228,4 +228,5 @@ body:not(.sideExpanded) * #menu {
 }
 #layers div {
     overflow: hidden;
+    display: inline-grid;
 }

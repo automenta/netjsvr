@@ -201,11 +201,12 @@ class Focus {
                                 r.enabled = false;
                             else {
                                 r.enabled = true;
-                                if (r.attributes && r.attributes.interiorColor) {
-                                    r.attributes.interiorColor.red = _red;
-                                    r.attributes.interiorColor.green = _green;
-                                    r.attributes.interiorColor.blue = 0;
-                                    r.attributes.interiorColor.alpha = Math.abs(gx);
+                                const a = r.attributes;
+                                if (a && a.interiorColor) {
+                                    a.interiorColor.red = _red;
+                                    a.interiorColor.green = _green;
+                                    a.interiorColor.blue = 0;
+                                    a.interiorColor.alpha = Math.abs(gx);
                                 }
                             }
                         });
@@ -250,7 +251,6 @@ class Focus {
             .addClass('interestIcon').addClass('buttonlike')
         //.css('font-size', `${Math.min(150, 100 * Math.log(1 + rx * 1E3))}%`);
 
-        const ctl = $('<div>');
         //x.data('icon', icon);
 
         const clearButton = $('<button>').text('x');
@@ -265,14 +265,25 @@ class Focus {
         });
         clearButton.hide();
 
-        ctl.append(
-            $('<button>').text('+').click(() => this.add(x, +0.25, clearButton))
-        ).append(
-            $('<button>').text('-').click(() => this.add(x, -0.25, clearButton))
-        ).append(
+        // const slider = $('<input type="range" min="-5" max="5" value="0"/>');
+        // slider.css('width', '4em');
+        // slider.change(e=>{
+        //
+        // });
+
+        //const slider = $('<div>'); //TODO 5 buttons
+
+        const upDownButtons = $('<div>').append(
+            $('<button>').text('+').click(() => this.add(x, +0.25, clearButton)),
+            $('<button>').text('-').click(() => this.add(x, -0.25, clearButton)),
             clearButton
         );
-        icon.prepend(ctl);
+        icon.prepend($('<div>').append(
+            //slider
+            upDownButtons
+        ));
+
+        return icon;
 
         /*
         let goalSelect = $('<select>').append(
@@ -332,7 +343,6 @@ class Focus {
         */
 
 
-        return icon;
         //return $('<div>').addClass('interestGroup').append(icon);
     }
 
