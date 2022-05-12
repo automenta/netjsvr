@@ -79,7 +79,7 @@ class OSMNodes extends GeoLayer {
         this._update(
             '(way<bbox>; node<bbox>;);'
             //'(way[highway]<bbox>; relation<bbox>; node<bbox>;);'
-            , pos.latitude, pos.longitude, /*0.007*/ 0.002)
+            , pos.latitude, pos.longitude, /*0.007*/ 0.003)
     }
 
     update(focus) {
@@ -95,8 +95,8 @@ class OSMNodes extends GeoLayer {
 
         //dither these numbers to maximize cache hit rates:
         const bbox = this.bbox(
-            _.round(latMin, 3), _.round(lonMin, 3),
-            _.round(latMax, 3), _.round(lonMax, 3));
+            _.round(latMin, 4), _.round(lonMin, 4),
+            _.round(latMax, 4), _.round(lonMax, 4));
 
         var host =
             'z.overpass-api.de';

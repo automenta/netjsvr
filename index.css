@@ -86,11 +86,19 @@ body:not(.sideExpanded) .side #active {
     direction: ltr; /* restore direction */
 }
 
+#layers {
+    display: flow-root;;
+}
+#layers div {
+    overflow: hidden;
+    display: inline-grid;
+}
+
 .cell {
     /*background-color: rgba(0.7, 0.7, 0.7, 0.75);*/
-    background-color: black;
+    /*background-color: black;*/
 
-    color: white;
+    /*color: white;*/
 
     /*opacity:0.9;*/
     /*width: auto;*/
@@ -98,16 +106,16 @@ body:not(.sideExpanded) .side #active {
     padding: 0.1em;
     margin: 0.2em;
 
-    /*min-width: 25px;*/
+    width: 27%;
+    min-height: 3em;
     border: 4px solid black;
 }
 
 .cell.cell_enabled {
     /*background-color: rgba(1, 1, 1, 0.9) !important;*/
-    padding-top: 0.5em;
-    padding-bottom: 0.5em;
+    /*padding-top: 0.5em;*/
+    /*padding-bottom: 0.5em;*/
     border-color: yellow;
-
 }
 
 .cell .label {
@@ -222,11 +230,4 @@ body:not(.sideExpanded) * #menu {
 }
 .interestGroup .interestGroup {
     margin-left: 1em;
-}
-#layers {
-    display: flex;
-}
-#layers div {
-    overflow: hidden;
-    display: inline-grid;
 }
