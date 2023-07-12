@@ -79,7 +79,7 @@ class OSMNodes extends GeoLayer {
         this._update(
             '(way<bbox>; node<bbox>;);'
             //'(way[highway]<bbox>; relation<bbox>; node<bbox>;);'
-            , pos.latitude, pos.longitude, /*0.007*/ 0.003)
+            , pos.latitude, pos.longitude, /*0.007*/ 0.004)
     }
 
     update(focus) {
@@ -98,9 +98,9 @@ class OSMNodes extends GeoLayer {
             _.round(latMin, 4), _.round(lonMin, 4),
             _.round(latMax, 4), _.round(lonMax, 4));
 
-        var host =
+        const host =
             'z.overpass-api.de';
-            //'lz4.overpass-api.de'
+        //'lz4.overpass-api.de'
             //'overpass.openstreetmap.fr'
             //'overpass-api.de'
 
@@ -140,31 +140,10 @@ class OSMNodes extends GeoLayer {
         // const interests = [];
 
         //register inferred interests
+
+
+
         const pp = x.properties;
-        // if (pp.amenity) interests.push(pp.amenity);
-        // if (pp.highway) interests.push('Way');
-        // if (pp.power) interests.push('Power');
-        // if (pp.boundary) interests.push('Boundary');
-        // if (pp.barrier) interests.push('Barrier');
-        // if (pp.waterway) interests.push('Water');
-        // if (pp.building) interests.push('Building');
-        // _.forEach(interests, i => {
-        //     this.focus.link(pp.id, i);
-        // });
-
-
-        //custom ontology:
-        this.focus.link('highway', 'way');
-        this.focus.link('cycleway', 'way');
-        this.focus.link('sidewalk', 'way');
-        this.focus.link('steps', 'way');
-
-        this.focus.link('oneway', 'way');
-        this.focus.link('maxspeed', 'way');
-        this.focus.link('direction', 'way');
-        this.focus.link('lanes', 'way');
-        this.focus.link('footway', 'way');
-
 
         const X = pp.id;
         _.forEach(pp, (value, key) => {
@@ -190,29 +169,33 @@ class OSMNodes extends GeoLayer {
 
         const altitudeDefault = 6, altitudeRoad = 4;
 
+        function rectShape(lat, lon, alt, rad) {
+            const shape = [];
+            for (let lt = lat - rad; lt <= lat + rad; lt += rad) {
+                const row = [];
+                for (let ln = lon - rad; ln <= lon + rad; ln += rad)
+                    row.push(new WorldWind.Position(lt, ln, alt));
+                shape.push(row);
+            }
+            return shape;
+        }
+
         p.addRenderablesForPoint = function (layer, geometry, properties) {
             if (!(!this.crs || this.crs.isCRSSupported())) return;
 
             const cfg = this.shapeConfigurationCallback(geometry, properties);
 
             const coords = geometry.coordinates;
-            const lon = coords[0],
-                lat = coords[1];
-            let alt = coords[2] ? coords[2] : 0;
-            alt += 5;
+            const lon = coords[0], lat = coords[1];
+            const altOffset = 5; //??
+            const alt = (coords[2] ? coords[2] : 0) + altOffset;
+
             // var reprojectedCoordinate = this.getReprojectedIfRequired(lat, lon, this.crs);
             // lat = reprojectedCoordinate[1];
-            // lon = reprojectedCoordinate[0];
-            const w = 0.0001;
-            const meshPositions = [];
-            for (let lt = lat - w / 2; lt <= lat + w / 2; lt += w) {
-                const row = [];
-                for (let ln = lon - w / 2; ln <= lon + w / 2; ln += w)
-                    row.push(new WorldWind.Position(lt, ln, alt));
-                meshPositions.push(row);
-            }
+            const rad = 0.0001;
+            const shape = rectShape(lat, lon, alt, rad);
             //console.log(meshPositions);
-            const icon = new WorldWind.GeographicMesh(meshPositions, cfg);
+            const icon = new WorldWind.GeographicMesh(shape, cfg);
             let attr = new WorldWind.ShapeAttributes(null);
             attr.concept = properties;
             attr.outlineColor = WorldWind.Color.BLACK;

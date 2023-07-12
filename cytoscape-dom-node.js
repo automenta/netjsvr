@@ -89,7 +89,7 @@ function register (cy) {
         return;
 
     cy('core', 'domNode', function (params, opts) {
-        return new CytoscapeDomNode(this, params, opts);
+        return new CytoscapeDomNode(params, opts);
     });
 }
 

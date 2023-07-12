@@ -45,7 +45,7 @@ $.sidebarMenu = function(menu) {
         }
 
         //if this isn't a link, prevent the page from being redirected
-        if (hasSubMenu)
-            e.preventDefault();
+        //if (hasSubMenu)
+            //e.preventDefault();
     });
 }

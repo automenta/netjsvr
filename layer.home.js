@@ -32,7 +32,8 @@ class HomeLayer extends Layer {
             this.go(focus);
         }));
         d.append($('<div>').text('Set').addClass('buttonlike').click(() => {
-            this.pos = _.clone(focus.view.camera.position);
+            const p = focus.view.focus.view.pos();
+            this.pos = _.clone(p);
             this.save();
             this.go(focus);
         }));
@@ -41,10 +42,13 @@ class HomeLayer extends Layer {
     }
 
     go(focus) {
-        const pos = this.pos;
-        if (pos) {
-            focus.position(pos.latitude, pos.longitude, pos.altitude);
-            focus.view.redraw();
-        }
+        setTimeout(()=>{
+            const pos = this.pos;
+            console.log('go', pos);
+            if (pos) {
+                focus.position(pos.latitude, pos.longitude, pos.altitude);
+                focus.view.redraw();
+            }
+        });
     }
 }

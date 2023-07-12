@@ -28,8 +28,7 @@ class Focus {
 
         attn.attnUpdated = _.throttle(() => {
 
-            const a =
-                    attn.$()
+            const a = attn;//.$()
                 // attn.$().filter(e => {
                 //     return !e.isNode() || !e.data('instance');
                 // }).kruskal()
@@ -67,40 +66,59 @@ class Focus {
                 if (d <= 1) {
                     x.style('display', 'none');
                     $(x.data('dom')).remove();
-
                 }
-
             });
 
 
             //console.log(attn);
             //TODO stop any previous layout?
-            try {
-                attn.layout({
-                    //name: 'grid'
-                    //name: 'cose'//, numIter: 50,  coolingFactor: 0.999, animate: false
-                    name: 'breadthfirst', circle: true, nodeDimensionsIncludeLabels: true
-                }).run();
-            } catch (e) {
-            }
+
+            // try {
+            //     attn.layout({
+            //         //name: 'grid'
+            //         //name: 'cose'//, numIter: 50,  coolingFactor: 0.999, animate: false
+            //         name: 'breadthfirst', circle: true, nodeDimensionsIncludeLabels: true
+            //     }).run();
+            // } catch (e) {
+            // }
+
             // attn.layout({
             //     //name: 'grid'
             //     name: 'cose', numIter: 50,  coolingFactor: 0.999, animate: false, randomize:false
             //     //name: 'breadthfirst', circle: true/*, nodeDimensionsIncludeLabels: true*/
             // }).run();
 
-        }, 1000);
+        }, 100);
         this.attn = attn;
 
-        this.GOAL_EPSILON = 0.01;
+        this.GOAL_EPSILON =
+            //0.01;
+            0.05;
 
         this.spread = _.throttle(() => {
             this._update();
         }, 100);
 
+        // const thatSpread = this.spread;
+        // this.spread = () => {
+        //     console.log('trying spread');
+        //     thatSpread();
+        // };
 
         //const updatePeriodMS = 200;
         //this.running = setInterval(this.run, updatePeriodMS);
+
+        //ontology (defaults)
+        this.link('highway', 'way');
+        this.link('cycleway', 'way');
+        this.link('sidewalk', 'way');
+        this.link('steps', 'way');
+
+        this.link('oneway', 'way');
+        this.link('maxspeed', 'way');
+        this.link('direction', 'way');
+        this.link('lanes', 'way');
+        this.link('footway', 'way');
     }
 
     graphView(elementID) {
@@ -143,88 +161,101 @@ class Focus {
     /** spreading activation iteration */
     _update() {
 
-        const inRate = 0.25, outRate = 0.5, selfRate = 0.25, iters = 10;
+        const inRate = 0.5, outRate = 0.9, selfRate = 0, iters = 1;
 
-        for (var iter = 0; iter < iters; iter++) {
-            this.attn.nodes().forEach(x => {
-                if (x.data('specified')) return; //dont modify, set by user
+        const nodes = this.attn.nodes();
 
-                var v = 0, sum = 0;
+        for (let iter = 0; iter < iters; iter++) {
+            nodes.forEach(n => {
+                if (n.data('specified')) return; //dont modify, set by user
 
-                v += this.goal(x) * selfRate;
-                sum += selfRate;
+                let v = this.goal(n) * selfRate;
+                let sum = selfRate;
 
-                const I = x.indegree(), O = x.outdegree();
-                //TODO reverse this
-                if (I > 0) {
-                    //TODO double-buffer
-                    x.incomers().nodes().forEach(y => {
-                        const gy = this.goal(y);
-                        v += gy * inRate;
-                        sum += inRate;
-                    });
-                }
-                if (O > 0) {
-                    x.outgoers().nodes().forEach(y => {
-                        const gy = this.goal(y);
-                        v += gy * outRate;
-                        sum += outRate;
-                    });
-                }
+                //TODO double-buffer
+                n.incomers().forEach(xe => {
+                    const x = xe.source();
+                    const gy = this.goal(x);
+                    v += gy * inRate;
+                    sum += inRate;
+                });
+                n.outgoers().forEach(xe => {
+                    const x = xe.target();
+                    const gy = this.goal(x);
+                    v += gy * outRate;
+                    sum += outRate;
+                });
+
                 const vv = sum === 0 ? 0 : v / sum;
-                //console.log(x, vv);
-                this.goalSet(x, vv);
+                this.goalSet(n, vv);
             });
         }
 
-        this.attn.nodes().forEach(x => {
-            var icon = x.data('icon');
-            if (!icon) return;
 
-            icon = $(icon);
+        //accumualate value flows
+        const values = new Map();
+        nodes.forEach(x => {
+            let icon = x.data('icon');
+            if (!icon) return;
+            // icon = $(icon);
+            // const iconColorIntensity = 0.5;
+            // const green = Math.round(_green * 256 * iconColorIntensity);
+            // const red = Math.round(_red * 256 * iconColorIntensity);
+            // const blue = 0;
+            // icon.css('background-color', 'rgba(' + red + ',' + green + ',' + blue + ', 1)');
+
             const gx = this.goal(x);
-            const _green = Math.max(gx, 0);
-            const _red = Math.max(-gx, 0);
-            const iconColorIntensity = 0.5;
-            const green = parseInt(_green * 256 * iconColorIntensity);
-            const red = parseInt(_red * 256 * iconColorIntensity);
-            const blue = 0;
-            icon.css('background-color', 'rgba(' + red + ',' + green + ',' + blue + ', 1)');
-            this.attn.elements().dfs({
-                roots: x, //attn.getElementById(xid),
-                directed: true,
-                visit: (v, e, u, i, depth) => {
-                    const V = v.data('instance');
-                    if (V && V.renderables) {
-                        _.forEach(V.renderables, r => {
-                            if (Math.abs(gx) < this.GOAL_EPSILON)
-                                r.enabled = false;
-                            else {
-                                r.enabled = true;
-                                const a = r.attributes;
-                                if (a && a.interiorColor) {
-                                    a.interiorColor.red = _red;
-                                    a.interiorColor.green = _green;
-                                    a.interiorColor.blue = 0;
-                                    a.interiorColor.alpha = Math.abs(gx);
-                                }
-                            }
-                        });
-                        //this.view.redraw();
+            if (Math.abs(gx) < this.GOAL_EPSILON)
+                return;
+
+            x.leaves().forEach(v => {
+                const xi = v.data('instance');
+                if (xi && xi.renderables) {
+                    let d = values.get(v) || 0;
+                    d += gx;
+                    values.set(xi, d);
+                }
+            });
+        });
+
+        //apply values to renderable
+        nodes.forEach((x)=> {
+            const xi = x.data('instance');
+            if (!xi || !xi.renderables)
+                return;
+
+            const d = values.get(xi) || 0;
+
+            const da = Math.abs(d);
+            const _red = Math.max(-d, 0);
+            const _green = Math.max(d, 0);
+
+            _.forEach(xi.renderables, r => {
+                if (da < this.GOAL_EPSILON)
+                    r.enabled = false;
+                else {
+                    r.enabled = true;
+                    const a = r.attributes;
+                    if (a && a.interiorColor) {
+                        a.interiorColor.red = _red;
+                        a.interiorColor.green = _green;
+                        a.interiorColor.blue = 0;
+                        a.interiorColor.alpha = da;
                     }
                 }
             });
         });
+
         this.view.redraw();
     }
 
     goal(x) {
-        if (typeof (x) === 'string')
+        if (typeof(x) === 'string')
             x = this.attn.$id(x);
         if (x === undefined) return 0;
+
         const y = x.data('goal');
-        if (y === undefined) return 0;
-        return y;
+        return y === undefined ? 0 : y;
     }
 
     goalSet(x, value) {
@@ -235,7 +266,7 @@ class Focus {
         if (Math.abs(dg) < this.GOAL_EPSILON)
             return;
 
-        var g = x.data('goal');
+        let g = x.data('goal');
         if (g === undefined) g = 0;
         g += dg;
         if (g > +1) g = +1;
@@ -273,12 +304,12 @@ class Focus {
 
         //const slider = $('<div>'); //TODO 5 buttons
 
-        const upDownButtons = $('<div>').append(
-            $('<button>').text('+').click(() => this.add(x, +0.25, clearButton)),
-            $('<button>').text('-').click(() => this.add(x, -0.25, clearButton)),
+        const upDownButtons = $(document.createElement('div')).append(
+            $(document.createElement('button')).text('+').click(() => this.add(x, +0.25, clearButton)),
+            $(document.createElement('button')).text('-').click(() => this.add(x, -0.25, clearButton)),
             clearButton
         );
-        icon.prepend($('<div>').append(
+        icon.prepend($(document.createElement('div')).append(
             //slider
             upDownButtons
         ));
@@ -394,7 +425,6 @@ class Focus {
 
         //TODO only if graph actually changed
         this.attn.attnUpdated();
-
     }
 
     addInterest(x) {
@@ -425,7 +455,7 @@ class Focus {
         return div;
     }
 
-    addLayer(layer) {
+     addLayer(layer) {
         this.layers.push(layer);
 
         if (layer.enabled === undefined)

@@ -12,11 +12,11 @@ function NSlider(opt) {
     };
 
     /** value */
-    var p;
+    let p;
 
-    var slider = $('<div>&nbsp;</div>').addClass('zoomSlider');
+    const slider = $('<div>&nbsp;</div>').addClass('zoomSlider');
 
-    var bar = $('<span>&nbsp;</span>').addClass('bar').appendTo(slider);
+    const bar = $('<span>&nbsp;</span>').addClass('bar').appendTo(slider);
 
     bar.css({
         height: '100%',
@@ -25,18 +25,18 @@ function NSlider(opt) {
         backgroundColor: 'blue'
     });
 
-    var mousedown = false;
+    let mousedown = false;
 
     const update = e => {
-        var s = slider;
-        var px = s.offset().left;
-        var x = e.clientX - px;
+        const s = slider;
+        const px = s.offset().left;
+        const x = e.clientX - px;
 
         p = (parseFloat(x) / parseFloat(s.width()));
 
-        var cr = parseInt(255.0 * p);
-        var cg = parseInt(25.0);
-        var cb = parseInt(255.0 * (1.0 - p));
+        const cr = Math.round(255.0 * p);
+        const cg = Math.round(25.0);
+        const cb = Math.round(255.0 * (1.0 - p));
 
         setTimeout(() => {
             bar.css({
@@ -52,7 +52,7 @@ function NSlider(opt) {
     };
 
     slider.mouseup(e => {
-        var p = update(e);
+        const p = update(e);
         mousedown = false;
 
         if (opt.onRelease)
