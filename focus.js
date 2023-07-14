@@ -1,3 +1,4 @@
+"use strict";
 class Focus {
 
     constructor() {
@@ -5,90 +6,72 @@ class Focus {
         /* DEPRECATED */
         this.view = null;
 
-        const attn = cytoscape({
-            headless: true
+        const attn = new graphology.Graph({multi: true, allowSelfLoops: false, type: 'directed'});
+        attn.attnUpdated = ()=>{};
 
-            // container: document.getElementById('overlay'),
-            // style: [{
-            //     selector: 'node',
-            //     style: {
-            //         //'label': 'data(id)',
-            //         //'background-color': '#666',
-            //         'background-opacity': 0,
-            //         'width': x => {
-            //             return 10 * (1 + Math.log(1 + x.outdegree() / 1));
-            //         },
-            //         'height': x => {
-            //             return 10 * (1 + Math.log(1 + x.outdegree() / 1));
-            //         }
-            //     }
-            // }]
-        });
-        //if (!headless)  attn.domNode();
-
-        attn.attnUpdated = _.throttle(() => {
-
-            const a = attn;//.$()
-                // attn.$().filter(e => {
-                //     return !e.isNode() || !e.data('instance');
-                // }).kruskal()
-            ;
-            {
-                // const tgt = $('#interests');
-                // tgt.html('');
-                //
-
-                //
-                // const rank = a //attn.$()
-                //     //pageRank().rank;
-                //     .degreeCentralityNormalized().degree;
-                // //closenessCentralityNormalized().closeness;
-                //
-                // a/*attn*/.nodes().roots().sort((a,b)=>rank(b)-rank(a)).forEach(x=>{
-                //     //if (x.data('instance')) return;
-                //     const icon = this.interestIcon(x, rank, attn);
-                //     tgt.append(icon);
-                //
-                //     //console.log(x.outgoers());
-                //     x.outgoers().nodes().forEach(xe => {
-                //         icon.append(this.interestIcon(xe, rank, attn));
-                //     });
-                //
-                // });
-
-            }
-
-
-            a/*attn*/.nodes().forEach(x => {
-                //console.log(x, x.outdegree());
-                const d = x.outdegree();
-                //if (d===0)
-                if (d <= 1) {
-                    x.style('display', 'none');
-                    $(x.data('dom')).remove();
-                }
-            });
-
-
-            //console.log(attn);
-            //TODO stop any previous layout?
-
-            // try {
-            //     attn.layout({
-            //         //name: 'grid'
-            //         //name: 'cose'//, numIter: 50,  coolingFactor: 0.999, animate: false
-            //         name: 'breadthfirst', circle: true, nodeDimensionsIncludeLabels: true
-            //     }).run();
-            // } catch (e) {
-            // }
-
-            // attn.layout({
-            //     //name: 'grid'
-            //     name: 'cose', numIter: 50,  coolingFactor: 0.999, animate: false, randomize:false
-            //     //name: 'breadthfirst', circle: true/*, nodeDimensionsIncludeLabels: true*/
-            // }).run();
-
-        }, 100);
+        // attn.attnUpdated = _.throttle(() => {
+        //
+        //     const a = attn;//.$()
+        //         // attn.$().filter(e => {
+        //         //     return !e.isNode() || !e.data('instance');
+        //         // }).kruskal()
+        //     ;
+        //     {
+        //         // const tgt = $('#interests');
+        //         // tgt.html('');
+        //         //
+        //
+        //         //
+        //         // const rank = a //attn.$()
+        //         //     //pageRank().rank;
+        //         //     .degreeCentralityNormalized().degree;
+        //         // //closenessCentralityNormalized().closeness;
+        //         //
+        //         // a/*attn*/.nodes().roots().sort((a,b)=>rank(b)-rank(a)).forEach(x=>{
+        //         //     //if (x.data('instance')) return;
+        //         //     const icon = this.interestIcon(x, rank, attn);
+        //         //     tgt.append(icon);
+        //         //
+        //         //     //console.log(x.outgoers());
+        //         //     x.outgoers().nodes().forEach(xe => {
+        //         //         icon.append(this.interestIcon(xe, rank, attn));
+        //         //     });
+        //         //
+        //         // });
+        //
+        //     }
+        //
+        //
+        //     a/*attn*/.nodes().forEach(x => {
+        //         //console.log(x, x.outdegree());
+        //         const d = x.outdegree();
+        //         //if (d===0)
+        //         if (d <= 1) {
+        //             x.style('display', 'none');
+        //             $(x.data('dom')).remove();
+        //         }
+        //     });
+        //
+        //
+        //     //console.log(attn);
+        //     //TODO stop any previous layout?
+        //
+        //     // try {
+        //     //     attn.layout({
+        //     //         //name: 'grid'
+        //     //         //name: 'cose'//, numIter: 50,  coolingFactor: 0.999, animate: false
+        //     //         name: 'breadthfirst', circle: true, nodeDimensionsIncludeLabels: true
+        //     //     }).run();
+        //     // } catch (e) {
+        //     // }
+        //
+        //     // attn.layout({
+        //     //     //name: 'grid'
+        //     //     name: 'cose', numIter: 50,  coolingFactor: 0.999, animate: false, randomize:false
+        //     //     //name: 'breadthfirst', circle: true/*, nodeDimensionsIncludeLabels: true*/
+        //     // }).run();
+        //
+        // }, 100);
         this.attn = attn;
 
         this.GOAL_EPSILON =
@@ -119,68 +102,93 @@ class Focus {
         this.link('direction', 'way');
         this.link('lanes', 'way');
         this.link('footway', 'way');
+        this.link('drive_through', 'way');
+        this.link('bicycle', 'way');
+        this.link('bus', 'way');
+        this.link('bridge', 'way');
+        this.link('railway', 'way');
+        this.link('crossing', 'way');
+        this.link('public_transport', 'way');
+        this.link('lane_markings', 'way');
+        this.link('passenger_lines', 'way');
+        this.link('tracktype', 'way');
+
+        this.link('parking', 'way');
+        this.link('park_ride', 'way');
+
+        this.link('denomination', 'religion');
+        // this.link('religion', 'social');
+
+        this.link('landuse', 'land');
+        this.link('surface', 'land');
+        this.link('boundary', 'land');
+
+        this.link('fee', 'shop');
+        this.link('atm', 'shop');
+        this.link('brand', 'shop');
+        this.link('advertising', 'shop');
+
+        this.link('happy_hours', 'eat');
+        this.link('outdoor_seating', 'eat');
+
     }
 
-    graphView(elementID) {
-        //TODO
-        const v = cytoscape({
-            //headless:true
-            container: document.getElementById(elementID),
-            style: [ // the stylesheet for the graph
-                {
-                    selector: 'node',
-                    style: {
-                        //'label': 'data(id)',
-                        //'background-color': '#666',
-                        'background-opacity': 0,
-                        'width': x => {
-                            return 10 * (1 + Math.log(1 + x.outdegree() / 1));
-                        },
-                        'height': x => {
-                            return 10 * (1 + Math.log(1 + x.outdegree() / 1));
-                        }
-                    }
-                }
-
-                // {
-                //     selector: 'edge',
-                //     style: {
-                //         'width': 3,
-                //         'line-color': '#ccc',
-                //         'target-arrow-color': '#ccc',
-                //         'target-arrow-shape': 'triangle',
-                //         'curve-style': 'bezier'
-                //     }
-                // }
-            ],
-        });
-        v.domNode();
-        return v;
-    }
+    // graphView(elementID) {
+    //     //TODO
+    //     const v = cytoscape({
+    //         //headless:true
+    //         container: document.getElementById(elementID),
+    //         style: [ // the stylesheet for the graph
+    //             {
+    //                 selector: 'node',
+    //                 style: {
+    //                     //'label': 'data(id)',
+    //                     //'background-color': '#666',
+    //                     'background-opacity': 0,
+    //                     'width': x => {
+    //                         return 10 * (1 + Math.log(1 + x.outdegree() / 1));
+    //                     },
+    //                     'height': x => {
+    //                         return 10 * (1 + Math.log(1 + x.outdegree() / 1));
+    //                     }
+    //                 }
+    //             }
+    //
+    //             // {
+    //             //     selector: 'edge',
+    //             //     style: {
+    //             //         'width': 3,
+    //             //         'line-color': '#ccc',
+    //             //         'target-arrow-color': '#ccc',
+    //             //         'target-arrow-shape': 'triangle',
+    //             //         'curve-style': 'bezier'
+    //             //     }
+    //             // }
+    //         ],
+    //     });
+    //     v.domNode();
+    //     return v;
+    // }
 
     /** spreading activation iteration */
     _update() {
 
-        const inRate = 0.5, outRate = 0.9, selfRate = 0, iters = 1;
-
-        const nodes = this.attn.nodes();
+        const inRate = 0.5, outRate = 0.75, selfRate = 0, iters = 3;
 
         for (let iter = 0; iter < iters; iter++) {
-            nodes.forEach(n => {
-                if (n.data('specified')) return; //dont modify, set by user
+            this.attn.forEachNode((_n, n) => {
+                if (n.specified) return; //dont modify, set by user
 
                 let v = this.goal(n) * selfRate;
                 let sum = selfRate;
 
                 //TODO double-buffer
-                n.incomers().forEach(xe => {
-                    const x = xe.source();
+                this.attn.forEachInNeighbor(_n, (_x, x) => {
                     const gy = this.goal(x);
                     v += gy * inRate;
                     sum += inRate;
                 });
-                n.outgoers().forEach(xe => {
-                    const x = xe.target();
+                this.attn.forEachOutNeighbor(_n, (_x, x) => {
                     const gy = this.goal(x);
                     v += gy * outRate;
                     sum += outRate;
@@ -194,9 +202,9 @@ class Focus {
 
         //accumualate value flows
         const values = new Map();
-        nodes.forEach(x => {
-            let icon = x.data('icon');
-            if (!icon) return;
+        this.attn.forEachNode((_n, x) => {
+            //let icon = x.icon;
+            //if (!icon) return;
             // icon = $(icon);
             // const iconColorIntensity = 0.5;
             // const green = Math.round(_green * 256 * iconColorIntensity);
@@ -205,30 +213,31 @@ class Focus {
             // icon.css('background-color', 'rgba(' + red + ',' + green + ',' + blue + ', 1)');
 
             const gx = this.goal(x);
-            if (Math.abs(gx) < this.GOAL_EPSILON)
-                return;
+            // if (Math.abs(gx) < this.GOAL_EPSILON)
+            //     return;
 
-            x.leaves().forEach(v => {
-                const xi = v.data('instance');
+            graphologyLibrary.traversal.dfsFromNode(this.attn, _n, (_v, v) => {
+                //console.log(_n, x, _v, v);
+                const xi = v.instance;
                 if (xi && xi.renderables) {
-                    let d = values.get(v) || 0;
+                    let d = values.get(_v) || 0;
                     d += gx;
-                    values.set(xi, d);
+                    values.set(_v, d);
                 }
             });
         });
 
         //apply values to renderable
-        nodes.forEach((x)=> {
-            const xi = x.data('instance');
+        this.attn.forEachNode((_n, x) => {
+            const xi = x.instance;
             if (!xi || !xi.renderables)
                 return;
 
-            const d = values.get(xi) || 0;
+            const d = values.get(_n) || 0;
 
             const da = Math.abs(d);
             const _red = Math.max(-d, 0);
-            const _green = Math.max(d, 0);
+            const _green = Math.max(+d, 0);
 
             _.forEach(xi.renderables, r => {
                 if (da < this.GOAL_EPSILON)
@@ -251,27 +260,27 @@ class Focus {
 
     goal(x) {
         if (typeof(x) === 'string')
-            x = this.attn.$id(x);
+            x = this.attn.getNodeAttributes(x);
         if (x === undefined) return 0;
 
-        const y = x.data('goal');
+        const y = x.goal;
         return y === undefined ? 0 : y;
     }
 
     goalSet(x, value) {
-        x.data('goal', value);
+        x.goal = value;
     }
 
     goalAdd(x, dg, update = false) {
         if (Math.abs(dg) < this.GOAL_EPSILON)
             return;
 
-        let g = x.data('goal');
+        let g = x.goal;
         if (g === undefined) g = 0;
         g += dg;
         if (g > +1) g = +1;
         else if (g < -1) g = -1;
-        x.data('goal', g);
+        x.goal = g;
         if (update)
             this.spread();
     }
@@ -286,9 +295,9 @@ class Focus {
 
         const clearButton = $('<button>').text('x');
         clearButton.click(() => {
-            const X = this.attn.$id(x);
-            if (X.data('specified')) {
-                X.data('specified', false); //TODO removeData
+            const X = this.attn.getNodeAttributes(x);
+            if (X.specified) {
+                X.specified = false; //TODO removeData
                 //TODO disable 'x'
                 this.spread();
                 clearButton.hide();
@@ -378,8 +387,8 @@ class Focus {
     }
 
     add(x, d, clearButton) {
-        const X = this.attn.$id(x);
-        X.data('specified', true);
+        const X = this.attn.getNodeAttributes(x);
+        X.specified = true;
         this.goalAdd(X, d, true);
         clearButton.show();
     }
@@ -412,37 +421,29 @@ class Focus {
         // if (this.interests.get(i))
         //     return; //ignore duplicate
 
-        //console.log(x, y);
         this.addInterest(y);
         this.addInterest(x);
 
-        //TODO add edges (and div's) only if not already present
-
-
-        this.attn.add([
-            {group: 'edges', data: { /*id: x + '__' + y,*/ source: y, target: x}}
-        ]);
+        //TODO mergeEdge
+        this.attn.addEdge(y, x, { });
 
         //TODO only if graph actually changed
         this.attn.attnUpdated();
     }
 
     addInterest(x) {
-        if (this.attn.$id(x).length)
+        //TODO use mergeNode?
+        if (this.attn.hasNode(x))
             return; //already added
 
         const div = this.nodeDiv(x);
 
-        this.attn.add([{group: 'nodes', data: {id: x, dom: div}}]);
-
-        this.attn.$id(x).data('icon', div);
+        this.attn.addNode(x, { dom: div});
     }
 
     nodeDiv(x) {
-        const div = document.createElement("div");
-        $(div).append(x);
+        return $(document.createElement("div")).append(x, this.interestIcon(x, () => 1));
         //$(div).append($('<button>').text('+'), $('<button>').text('-'));
-        $(div).append(this.interestIcon(x, () => 1));
 
         //$(div).append($('<a>').text(id));
         //$(div).click(()=>{console.log(this);});
@@ -452,7 +453,6 @@ class Focus {
         //div.style.height = `${Math.floor(Math.random() * 30) + 50}px`;
         //div.style.opacity = 0.5;
         //div.style.margin = '10px';
-        return div;
     }
 
      addLayer(layer) {
@@ -475,27 +475,26 @@ class Focus {
     }
 
     updateMenu(m) {
-        const k = this.attn.elements().kruskal();
+        this.attn.forEachNode((id, attributes) => {
+            if (this.attn.inDegree(id) <= 0) {
 
-        const roots = k.nodes().filter(n => n.indegree() <= 0);
+                // console.log(id);
 
-        roots.forEach(n => {
-            const id = n.data('id');
-            m.addMenu(id, () => {
-                const d = $('<div>');
+                m.addMenu(id, () => {
+                    const d = $('<div>');
 
-                d.append(this.interestIcon(id));
+                    d.append(this.interestIcon(id));
 
-                //TODO hierarchical, not flattened:
-                n.successors().forEach(s => {
-                    if (s.outdegree() > 1) {
-                        d.append(this.interestIcon(s.data('id')))
-                    }
+                    // //TODO hierarchical, not flattened:
+                    graphologyLibrary.traversal.dfsFromNode(this.attn, id, (s, attr, depth) => {
+                        if (id!==s && this.attn.outDegree(s) > 1) {
+                            d.append(this.interestIcon(s));
+                        }
+                    });
+
+                    return d;
                 });
-
-                return d;
-            });
+            }
         });
-
     }
 }

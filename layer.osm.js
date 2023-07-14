@@ -79,7 +79,7 @@ class OSMNodes extends GeoLayer {
         this._update(
             '(way<bbox>; node<bbox>;);'
             //'(way[highway]<bbox>; relation<bbox>; node<bbox>;);'
-            , pos.latitude, pos.longitude, /*0.007*/ 0.004)
+            , pos.latitude, pos.longitude, /*0.007*/ 0.002)
     }
 
     update(focus) {
@@ -158,8 +158,8 @@ class OSMNodes extends GeoLayer {
             this.focus.link(keyvalue, key);
             if (value!=='yes' && value!=='no' && !_.isNumber(parseFloat(value)))
                 this.focus.link(keyvalue, value);
-            const xx = this.focus.attn.getElementById(X);
-            xx.data('instance', x);
+            const xx = this.focus.attn.getNodeAttributes(X);
+            xx.instance = x;
             //xx.style('display', 'none');
         });
 

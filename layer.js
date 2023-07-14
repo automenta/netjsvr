@@ -7,7 +7,7 @@ class Layer {
     start(focus) {
         const e = this.icon = $('<div>');
         e.attr('class', 'cell').append(this.layerIcon(focus));
-        $('#layers').append(e);
+        $('#menu').append(e);
         this.enabled = this.enabled; //force update
     }
 
