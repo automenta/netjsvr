@@ -6,6 +6,10 @@ class Focus {
         /* DEPRECATED */
         this.view = null;
 
+        this.tree = new RBush();
+
+        this.event = new window.mitt();
+
         const attn = new graphology.Graph({multi: true, allowSelfLoops: false, type: 'directed'});
         attn.attnUpdated = ()=>{};
 
@@ -173,7 +177,7 @@ class Focus {
     /** spreading activation iteration */
     _update() {
 
-        const inRate = 0.5, outRate = 0.75, selfRate = 0, iters = 3;
+        const inRate = 0, outRate = 0.75, selfRate = 0, iters = 2;
 
         for (let iter = 0; iter < iters; iter++) {
             this.attn.forEachNode((_n, n) => {
@@ -183,16 +187,20 @@ class Focus {
                 let sum = selfRate;
 
                 //TODO double-buffer
-                this.attn.forEachInNeighbor(_n, (_x, x) => {
-                    const gy = this.goal(x);
-                    v += gy * inRate;
-                    sum += inRate;
-                });
-                this.attn.forEachOutNeighbor(_n, (_x, x) => {
-                    const gy = this.goal(x);
-                    v += gy * outRate;
-                    sum += outRate;
-                });
+                if (inRate!==0) {
+                    this.attn.forEachInNeighbor(_n, (_x, x) => {
+                        const gy = this.goal(x);
+                        v += gy * inRate;
+                        sum += inRate;
+                    });
+                }
+                if (outRate!==0) {
+                    this.attn.forEachOutNeighbor(_n, (_x, x) => {
+                        const gy = this.goal(x);
+                        v += gy * outRate;
+                        sum += outRate;
+                    });
+                }
 
                 const vv = sum === 0 ? 0 : v / sum;
                 this.goalSet(n, vv);
@@ -413,32 +421,32 @@ class Focus {
         return pos;
     }
 
-    cam() {
-        return this.view.w.camera; //HACK
-    }
+    // cam() {
+    //     return this.view.w.camera; //HACK
+    // }
 
     link(x, y, cfg) {
         // if (this.interests.get(i))
         //     return; //ignore duplicate
 
-        this.addInterest(y);
-        this.addInterest(x);
+        let change = this.addNode(y);
+        change |= this.addNode(x);
 
         //TODO mergeEdge
         this.attn.addEdge(y, x, { });
 
         //TODO only if graph actually changed
-        this.attn.attnUpdated();
+        this.event.emit('graph_change', { /* TODO */ } );
     }
 
-    addInterest(x) {
+    addNode(x) {
         //TODO use mergeNode?
         if (this.attn.hasNode(x))
-            return; //already added
+            return false; //already added
 
-        const div = this.nodeDiv(x);
 
-        this.attn.addNode(x, { dom: div});
+        this.attn.addNode(x, { });
+        return true;
     }
 
     nodeDiv(x) {

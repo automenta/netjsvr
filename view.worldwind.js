@@ -27,23 +27,19 @@ class WorldWindView extends View {
         // Listen for mouse moves and highlight the placemarks that the cursor rolls over.
         // Listen for taps on mobile devices and highlight the placemarks that the user taps.
         let finger = o => {
-            //console.log(o);
             if (o.buttons !== 1)
                 return;
 
-            //_.forEach(this.touched, t => t.highlighted = false);
-            //const touched = this.touched = [];
             let picked;
             try {
-                const px = o.clientX, py = o.clientY;
-                picked = view.pick(view.canvasCoordinates(px, py));
+                picked = view.pick(view.canvasCoordinates(o.clientX, o.clientY));
             } catch (e) {
                 console.log(e);
                 return;
             }
 
             const picks = picked.objects;
-            //console.log(picks);
+            console.log('pick', picks);
 
             if (picks.length > 0) {
                 const x = picks[picks.length - 1];
@@ -82,6 +78,16 @@ class WorldWindView extends View {
         //var tapRecognizer = new WorldWind.TapRecognizer(view, finger);
         //view.addEventListener("mousemove", finger);
         view.addEventListener("pointerdown", finger);
+
+        let lastCam = undefined;
+        window.setInterval(() => {
+            const cam = this.w.camera.clone();
+            if (!cam.equals(lastCam)) {
+                focus.event.emit('view_change', cam);
+                //console.log(cam);
+            }
+            lastCam = cam;
+        }, 100);
 
         return this;
     }

@@ -1,4 +1,4 @@
-class OSMNodes extends GeoLayer {
+class OSMNodeLayer extends GeoLayer {
 
     constructor(focus) {
         super("OpenStreetMaps", new WorldWind.RenderableLayer());
@@ -100,7 +100,7 @@ class OSMNodes extends GeoLayer {
 
         const host =
             'z.overpass-api.de';
-        //'lz4.overpass-api.de'
+            //'lz4.overpass-api.de'
             //'overpass.openstreetmap.fr'
             //'overpass-api.de'
 
@@ -136,8 +136,6 @@ class OSMNodes extends GeoLayer {
     }
 
     load(x) {
-
-        // const interests = [];
 
         //register inferred interests
 
@@ -198,7 +196,8 @@ class OSMNodes extends GeoLayer {
             const icon = new WorldWind.GeographicMesh(shape, cfg);
             let attr = new WorldWind.ShapeAttributes(null);
             attr.concept = properties;
-            attr.outlineColor = WorldWind.Color.BLACK;
+            attr.drawOutline = false;
+            //attr.outlineColor = WorldWind.Color.BLACK;
             attr.interiorColor = new WorldWind.Color(1, 1, 1, 0.75);
             attr.applyLighting = true;
             icon.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
@@ -239,7 +238,7 @@ class OSMNodes extends GeoLayer {
             cfg.attributes.drawOutline = false;
             cfg.attributes.depthTest = true;
             cfg.attributes.drawVerticals = false;
-            cfg.attributes.applyLighting = cfg.attributes.enableLighting = false;
+            cfg.attributes.applyLighting = cfg.attributes.enableLighting = true;
             const shape = new WorldWind.Polygon(
                 b,
                 cfg && cfg.attributes ? cfg.attributes : null);
@@ -255,6 +254,7 @@ class OSMNodes extends GeoLayer {
 
             ll.push(shape);
         };
+
         const that = this;
         p.addRenderablesForLineString = function (layer, geometry, properties) {
 
@@ -273,7 +273,7 @@ class OSMNodes extends GeoLayer {
             }
             cfg.attributes.concept = properties;
             cfg.attributes.depthTest = true;
-            cfg.attributes.applyLighting = cfg.attributes.enableLighting = false;
+            cfg.attributes.applyLighting = cfg.attributes.enableLighting = true;
             cfg.attributes.drawInterior = true;
             // cfg.attributes.outlineColor =
             //     //undefined;
@@ -319,15 +319,13 @@ class OSMNodes extends GeoLayer {
             ll.push(path);
         };
 
-        const yl = this.layer;
-
         x.renderables = ll;
 
-        p.load(null, this.shapeConfigurationCallback, yl);
+        p.load(null, this.shapeConfigurationCallback, this.layer);
 
-        _.forEach(ll, yy => {
+        _.forEach(x.renderables, yy => {
             yy.enabled = false;
-            return yl.addRenderable(yy);
+            return this.layer.addRenderable(yy);
         });
     }
 

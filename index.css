@@ -99,7 +99,7 @@ body:not(.sideExpanded) .side #active {
 }
 
 .cell {
-    /*background-color: rgba(0.7, 0.7, 0.7, 0.75);*/
+    background-color: rgba(0.7, 0.7, 0.7, 0.75);
     /*background-color: black;*/
 
     /*color: white;*/
@@ -165,10 +165,11 @@ body:not(.sideExpanded) .side #active {
 
 .modal {
     position: fixed;
-    width: 80%;
-    height: 80%;
-    left: 10%;
-    top: 10%
+    width: 90%;
+    height: 70%;
+    left: 5%;
+    top: 5%;
+    overflow: auto;
 }
 
 #menu {
