@@ -99,6 +99,8 @@ class Focus {
         this.link('highway', 'way');
         this.link('cycleway', 'way');
         this.link('sidewalk', 'way');
+        this.link('sidewalk:left', 'sidewalk');
+        this.link('sidewalk:rigtt', 'sidewalk');
         this.link('steps', 'way');
 
         this.link('oneway', 'way');
@@ -116,6 +118,7 @@ class Focus {
         this.link('lane_markings', 'way');
         this.link('passenger_lines', 'way');
         this.link('tracktype', 'way');
+        this.link('turn', 'way');
 
         this.link('parking', 'way');
         this.link('park_ride', 'way');

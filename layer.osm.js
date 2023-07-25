@@ -199,7 +199,7 @@ class OSMNodeLayer extends GeoLayer {
             attr.drawOutline = false;
             //attr.outlineColor = WorldWind.Color.BLACK;
             attr.interiorColor = new WorldWind.Color(1, 1, 1, 0.75);
-            attr.applyLighting = true;
+            attr.applyLighting = false;
             icon.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
             icon.attributes = attr;
             if (cfg) {
@@ -238,7 +238,7 @@ class OSMNodeLayer extends GeoLayer {
             cfg.attributes.drawOutline = false;
             cfg.attributes.depthTest = true;
             cfg.attributes.drawVerticals = false;
-            cfg.attributes.applyLighting = cfg.attributes.enableLighting = true;
+            cfg.attributes.applyLighting = cfg.attributes.enableLighting = false;
             const shape = new WorldWind.Polygon(
                 b,
                 cfg && cfg.attributes ? cfg.attributes : null);
@@ -273,7 +273,7 @@ class OSMNodeLayer extends GeoLayer {
             }
             cfg.attributes.concept = properties;
             cfg.attributes.depthTest = true;
-            cfg.attributes.applyLighting = cfg.attributes.enableLighting = true;
+            cfg.attributes.applyLighting = cfg.attributes.enableLighting = false;
             cfg.attributes.drawInterior = true;
             // cfg.attributes.outlineColor =
             //     //undefined;
@@ -288,9 +288,8 @@ class OSMNodeLayer extends GeoLayer {
             //console.log(properties);
             if (properties.footway === 'sidewalk') {
                 thick = 0.5;
-                color = new WorldWind.Color(0.5, 0.5, 0.5, 1);
-            }
-            if (properties.lanes === '1') {
+                //color = new WorldWind.Color(0.5, 0.5, 0.5, 1);
+            } else if (properties.lanes === '1') {
                 thick = 2;
                 //color = new WorldWind.Color(0.5, 1, 0, 1);
             } else if (properties.lanes === '2') {
